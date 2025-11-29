@@ -1,0 +1,7 @@
+*.png
+*.jpg
+*.jpeg
+prompt
+input
+dist
+!dist/.gitkeep
