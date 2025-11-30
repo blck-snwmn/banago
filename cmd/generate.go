@@ -92,22 +92,27 @@ var generateCmd = &cobra.Command{
 			return err
 		}
 
-		fmt.Fprintf(cmd.OutOrStdout(), "生成完了: %s\n", strings.Join(saved, ", "))
+		w := cmd.OutOrStdout()
+		printf := func(format string, args ...any) {
+			_, _ = fmt.Fprintf(w, format, args...)
+		}
+
+		printf("生成完了: %s\n", strings.Join(saved, ", "))
 		if text := strings.TrimSpace(resp.Text()); text != "" {
-			fmt.Fprintln(cmd.OutOrStdout(), "テキスト応答:")
-			fmt.Fprintln(cmd.OutOrStdout(), text)
+			printf("テキスト応答:\n")
+			printf("%s\n", text)
 		}
 		if resp.UsageMetadata != nil {
 			usage := resp.UsageMetadata
-			fmt.Fprintln(cmd.OutOrStdout(), "トークン使用量:")
-			fmt.Fprintf(cmd.OutOrStdout(), "  prompt: %d\n", usage.PromptTokenCount)
-			fmt.Fprintf(cmd.OutOrStdout(), "  candidates: %d\n", usage.CandidatesTokenCount)
-			fmt.Fprintf(cmd.OutOrStdout(), "  total: %d\n", usage.TotalTokenCount)
+			printf("トークン使用量:\n")
+			printf("  prompt: %d\n", usage.PromptTokenCount)
+			printf("  candidates: %d\n", usage.CandidatesTokenCount)
+			printf("  total: %d\n", usage.TotalTokenCount)
 			if usage.CachedContentTokenCount > 0 {
-				fmt.Fprintf(cmd.OutOrStdout(), "  cached: %d\n", usage.CachedContentTokenCount)
+				printf("  cached: %d\n", usage.CachedContentTokenCount)
 			}
 			if usage.ThoughtsTokenCount > 0 {
-				fmt.Fprintf(cmd.OutOrStdout(), "  thoughts: %d\n", usage.ThoughtsTokenCount)
+				printf("  thoughts: %d\n", usage.ThoughtsTokenCount)
 			}
 		}
 		return nil
