@@ -12,9 +12,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: aquaproj/aqua-installer@v3.1.1
+      - uses: aquaproj/aqua-installer@v4.0.3
         with:
-          aqua_version: v2.51.2
+          aqua_version: v2.55.1
 
       - name: golangci-lint
         run: golangci-lint run
