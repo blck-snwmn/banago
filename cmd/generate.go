@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"cmp"
+
 	"github.com/google/uuid"
 	"github.com/spf13/cobra"
 	"google.golang.org/genai"
@@ -148,7 +149,7 @@ func saveInlineImages(resp *genai.GenerateContentResponse, dir, prefix string) (
 	if resp == nil {
 		return nil, errors.New("レスポンスが空です")
 	}
-	runID := uuid.New().String()
+	runID := uuid.Must(uuid.NewV7())
 	dir = cmp.Or(dir, "dist")
 	prefix = cmp.Or(prefix, "generated")
 	if err := os.MkdirAll(dir, 0o755); err != nil {
