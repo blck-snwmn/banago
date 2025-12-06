@@ -97,7 +97,10 @@ var generateCmd = &cobra.Command{
 			_, _ = fmt.Fprintf(w, format, args...)
 		}
 
-		printf("生成完了: %s\n", strings.Join(saved, ", "))
+		printf("生成されたファイル:\n")
+		for _, path := range saved {
+			printf("  %s\n", filepath.Base(path))
+		}
 		if text := strings.TrimSpace(resp.Text()); text != "" {
 			printf("テキスト応答:\n")
 			printf("%s\n", text)
