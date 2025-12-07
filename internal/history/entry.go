@@ -21,8 +21,10 @@ type Entry struct {
 
 // Generation contains generation parameters
 type Generation struct {
-	PromptFile  string   `yaml:"prompt_file"`
-	InputImages []string `yaml:"input_images"`
+	PromptFile    string   `yaml:"prompt_file"`
+	InputImages   []string `yaml:"input_images"`
+	ContextFile   string   `yaml:"context_file,omitempty"`
+	CharacterFile string   `yaml:"character_file,omitempty"`
 }
 
 // Result contains generation results
@@ -43,8 +45,10 @@ type TokenUsage struct {
 }
 
 const (
-	MetaFile   = "meta.yaml"
-	PromptFile = "prompt.txt"
+	MetaFile      = "meta.yaml"
+	PromptFile    = "prompt.txt"
+	ContextFile   = "context.md"
+	CharacterFile = "character.md"
 )
 
 // NewEntry creates a new history entry with a UUID v7 ID
@@ -82,6 +86,34 @@ func (e *Entry) SavePrompt(historyDir, prompt string) error {
 	promptPath := filepath.Join(entryDir, PromptFile)
 	if err := os.WriteFile(promptPath, []byte(prompt), 0o644); err != nil {
 		return fmt.Errorf("failed to write prompt.txt: %w", err)
+	}
+	return nil
+}
+
+// SaveContextFile copies the context file to the entry directory
+func (e *Entry) SaveContextFile(historyDir, srcPath string) error {
+	data, err := os.ReadFile(srcPath)
+	if err != nil {
+		return fmt.Errorf("failed to read context file: %w", err)
+	}
+	entryDir := filepath.Join(historyDir, e.ID)
+	dstPath := filepath.Join(entryDir, ContextFile)
+	if err := os.WriteFile(dstPath, data, 0o644); err != nil {
+		return fmt.Errorf("failed to write context.md: %w", err)
+	}
+	return nil
+}
+
+// SaveCharacterFile copies the character file to the entry directory
+func (e *Entry) SaveCharacterFile(historyDir, srcPath string) error {
+	data, err := os.ReadFile(srcPath)
+	if err != nil {
+		return fmt.Errorf("failed to read character file: %w", err)
+	}
+	entryDir := filepath.Join(historyDir, e.ID)
+	dstPath := filepath.Join(entryDir, CharacterFile)
+	if err := os.WriteFile(dstPath, data, 0o644); err != nil {
+		return fmt.Errorf("failed to write character.md: %w", err)
 	}
 	return nil
 }

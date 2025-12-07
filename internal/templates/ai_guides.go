@@ -21,7 +21,12 @@ const ClaudeMD = `# banago プロジェクト - Claude Code 向けガイド
 
 ### 3. 履歴参照（オプション）
 ` + "`history/`" + ` 内の過去の生成結果を参照できます。
-各履歴には prompt.txt と生成された画像が保存されています。
+各履歴には以下のファイルが保存されています:
+- ` + "`prompt.txt`" + `: 使用したプロンプト
+- ` + "`context.md`" + `: 生成時のコンテキスト情報
+- ` + "`character.md`" + `: 生成時のキャラクター情報（設定されている場合）
+- ` + "`output_*.png`" + `: 生成された画像
+- ` + "`meta.yaml`" + `: メタ情報
 
 ### 4. プロンプト生成と実行
 以下のコマンドで生成を実行してください:
@@ -38,7 +43,6 @@ banago generate --prompt-file <生成したプロンプトファイル>
 | ` + "`banago history`" + ` | 生成履歴を表示 |
 | ` + "`banago generate --prompt \"...\"`" + ` | プロンプト指定で生成 |
 | ` + "`banago generate --prompt-file <path>`" + ` | ファイルからプロンプト読み込み |
-| ` + "`banago regenerate --id <id>`" + ` | 過去の生成を参照して再生成 |
 
 ## プロンプト作成ガイドライン
 
@@ -46,6 +50,12 @@ banago generate --prompt-file <生成したプロンプトファイル>
 2. **構造**: 役割設定 → 制約条件 → 具体的な指示 → ゴール
 3. **詳細度**: 衣装ディテール、ポーズ、表情、背景を具体的に
 4. **禁止事項**: テキスト生成の明示的禁止を含める
+
+## 重要な注意事項
+
+- **履歴ファイルは編集禁止**: ` + "`history/`" + ` 内のファイル（prompt.txt, context.md, character.md, meta.yaml）は**絶対に編集しないでください**。これらは生成時の状態を記録するためのアーカイブです。
+- プロンプトを改善する場合は、新しいプロンプトファイルを作成して ` + "`banago generate`" + ` を実行してください。
+- コンテキストを変更したい場合は、サブプロジェクト直下の ` + "`context.md`" + ` を編集してください。
 `
 
 const GeminiMD = `# banago プロジェクト - Gemini CLI 向けガイド
@@ -77,7 +87,8 @@ banago generate --prompt-file <path>
 ### 4. 改善サイクル
 ` + "```bash" + `
 banago history           # 履歴確認
-banago regenerate --id <uuid>  # 再生成
+# 履歴の prompt.txt を参考に新しいプロンプトを作成して再実行
+banago generate --prompt-file <new-prompt>
 ` + "```" + `
 
 ## 利用可能なコマンド
@@ -87,7 +98,21 @@ banago regenerate --id <uuid>  # 再生成
 | ` + "`banago status`" + ` | 現在のサブプロジェクト状態を表示 |
 | ` + "`banago history`" + ` | 生成履歴を表示 |
 | ` + "`banago generate`" + ` | 画像生成 |
-| ` + "`banago regenerate`" + ` | 再生成 |
+
+## 履歴の内容
+
+各履歴エントリ（` + "`history/<uuid>/`" + `）には以下が保存されます:
+- ` + "`prompt.txt`" + `: 使用したプロンプト
+- ` + "`context.md`" + `: 生成時のコンテキスト情報
+- ` + "`character.md`" + `: 生成時のキャラクター情報（設定されている場合）
+- ` + "`output_*.png`" + `: 生成された画像
+- ` + "`meta.yaml`" + `: メタ情報
+
+## 重要な注意事項
+
+- **履歴ファイルは編集禁止**: ` + "`history/`" + ` 内のファイルは**絶対に編集しないでください**。これらは生成時の状態を記録するためのアーカイブです。
+- プロンプトを改善する場合は、履歴を参考に新しいプロンプトファイルを作成してください。
+- コンテキストを変更したい場合は、サブプロジェクト直下の ` + "`context.md`" + ` を編集してください。
 `
 
 const AgentsMD = `# banago プロジェクト - AI エージェント共通ガイド
@@ -109,9 +134,11 @@ const AgentsMD = `# banago プロジェクト - AI エージェント共通ガ�
         ├── inputs/       # 入力画像
         └── history/      # 生成履歴（UUID v7 ディレクトリ）
             └── <uuid>/
-                ├── prompt.txt
-                ├── meta.yaml
-                └── output_*.png
+                ├── prompt.txt    # 使用したプロンプト
+                ├── context.md    # 生成時のコンテキスト
+                ├── character.md  # 生成時のキャラクター情報
+                ├── meta.yaml     # メタ情報
+                └── output_*.png  # 生成画像
 ` + "```" + `
 
 ## ワークフロー詳細
@@ -123,14 +150,25 @@ const AgentsMD = `# banago プロジェクト - AI エージェント共通ガ�
 4. プロンプトを作成（ファイルに保存推奨）
 5. ` + "`banago generate --prompt-file <path>`" + ` で実行
 
-### 再生成フロー
+### 改善フロー
 1. ` + "`banago history`" + ` で過去の生成を確認
-2. 改善したいエントリのUUIDを特定
-3. ` + "`banago regenerate --id <uuid>`" + ` で過去の設定を参照して再生成
+2. 改善したいエントリの ` + "`prompt.txt`" + ` を参考に新しいプロンプトを作成
+3. 必要に応じて ` + "`context.md`" + ` を更新
+4. ` + "`banago generate --prompt-file <path>`" + ` で再実行
 
-## 重要な注意点
+## 重要な注意事項
 
-- 生成プロンプトは ` + "`history/<uuid>/prompt.txt`" + ` に自動保存されます
+### 履歴ファイルの取り扱い（必読）
+
+**` + "`history/`" + ` 内のファイルは絶対に編集しないでください。**
+
+- ` + "`history/<uuid>/`" + ` 内のすべてのファイル（prompt.txt, context.md, character.md, meta.yaml）は生成時の状態を記録するアーカイブです
+- これらを編集すると、過去の生成を再現できなくなります
+- プロンプトを改善したい場合は、履歴を**参照**して新しいプロンプトファイルを作成してください
+- コンテキストを変更したい場合は、サブプロジェクト直下の ` + "`context.md`" + ` を編集してください
+
+### その他の注意点
+
 - ` + "`inputs/`" + ` 内の画像は変更しないでください（履歴との整合性のため）
 - 履歴はUUID v7でソートされるため、時系列順に並びます
 `

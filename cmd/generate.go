@@ -171,6 +171,30 @@ var generateCmd = &cobra.Command{
 				return fmt.Errorf("プロンプトの保存に失敗しました: %w", err)
 			}
 
+			// Save context file
+			if subprojectCfg.ContextFile != "" {
+				contextPath := filepath.Join(subprojectDir, subprojectCfg.ContextFile)
+				if _, statErr := os.Stat(contextPath); statErr == nil {
+					if err := entry.SaveContextFile(historyDir, contextPath); err != nil {
+						fmt.Fprintf(w, "警告: コンテキストファイルの保存に失敗しました: %v\n", err)
+					} else {
+						entry.Generation.ContextFile = history.ContextFile
+					}
+				}
+			}
+
+			// Save character file
+			if subprojectCfg.CharacterFile != "" {
+				characterPath := filepath.Join(projectRoot, config.CharactersDir, subprojectCfg.CharacterFile)
+				if _, statErr := os.Stat(characterPath); statErr == nil {
+					if err := entry.SaveCharacterFile(historyDir, characterPath); err != nil {
+						fmt.Fprintf(w, "警告: キャラクターファイルの保存に失敗しました: %v\n", err)
+					} else {
+						entry.Generation.CharacterFile = history.CharacterFile
+					}
+				}
+			}
+
 			if err != nil {
 				// Save failed entry
 				entry.Result.Success = false
