@@ -35,12 +35,30 @@ cd subprojects/<name>
 
 ### Step 3: Setup Subproject
 
-1. **Character definition** (if needed): Create ` + "`characters/<name>.md`" + ` at project root
-2. **Edit** ` + "`config.yaml`" + `:
-   - Set ` + "`character_file: <name>.md`" + ` to reference character
-   - List input images under ` + "`input_images`" + `
-3. **Edit** ` + "`context.md`" + `: Add costume, scene, and pose details
-4. **Place reference images** in ` + "`inputs/`" + ` directory
+**Important**: Do NOT create or edit files with made-up information. Always ask the user first.
+
+1. **Character file** (if needed):
+   - Ask the user which character to use
+   - For known characters (VTubers, anime, etc.): Research and draft details, then **confirm with user** before creating
+   - For original characters: Ask the user to provide appearance and personality details
+   - Do NOT assume or guess - always confirm with user before creating the file
+
+2. **Context file**:
+   - **Ask the user**: "What scene do you want to generate? Please describe costume, pose, expression, background, and any specific requirements."
+   - Edit ` + "`context.md`" + ` based on user's response
+   - Do NOT assume or guess - always confirm with user before editing
+
+3. **config.yaml** - Add or modify these fields (do NOT replace the entire file):
+` + "```yaml" + `
+character_file: <name>.md
+input_images:
+  - image1.png
+  - image2.jpg
+` + "```" + `
+
+4. **Reference images**:
+   - **Ask the user**: "What reference images do you want to use? Please provide image files or paths."
+   - Place provided images in ` + "`inputs/`" + ` and add filenames to ` + "`config.yaml`" + ` ` + "`input_images`" + `
 
 ### Step 4: Create Prompt
 
@@ -137,10 +155,29 @@ cd subprojects/<name>
 
 ### Step 3: Setup Subproject
 
-1. Create ` + "`characters/<name>.md`" + ` at project root (if needed)
-2. Edit ` + "`config.yaml`" + `: set ` + "`character_file`" + ` and ` + "`input_images`" + `
-3. Edit ` + "`context.md`" + `: add scene/costume details
-4. Place reference images in ` + "`inputs/`" + `
+**Important**: Do NOT create or edit files with made-up information. Always ask the user first.
+
+1. **Character file** (if needed):
+   - Ask the user which character to use
+   - Known characters: Research, draft, **confirm with user** before creating
+   - Original characters: Ask user for details
+   - Do NOT assume or guess - always confirm first
+
+2. **Context file**:
+   - **Ask the user** for scene details (costume, pose, background)
+   - Edit ` + "`context.md`" + ` based on user's response
+   - Do NOT assume or guess - always confirm first
+
+3. **config.yaml** - Add or modify fields (do NOT replace entire file):
+` + "```yaml" + `
+character_file: <name>.md
+input_images:
+  - image1.png
+` + "```" + `
+
+4. **Reference images**:
+   - **Ask the user** what reference images to use
+   - Place provided images in ` + "`inputs/`" + `, add to ` + "`config.yaml`" + `
 
 ### Step 4: Create Prompt
 
@@ -220,10 +257,29 @@ cd subprojects/<name>
 
 ### Step 3: Setup Subproject
 
-1. **Character file**: Create ` + "`characters/<name>.md`" + ` at project root (if needed)
-2. **config.yaml**: Set ` + "`character_file`" + ` and list ` + "`input_images`" + `
-3. **context.md**: Add costume, scene, pose details
-4. **inputs/**: Place reference images here
+**Important**: Do NOT create or edit files with made-up information. Always ask the user first.
+
+1. **Character file** (if needed):
+   - Ask the user which character to use
+   - Known characters: Research, draft, **confirm with user** before creating
+   - Original characters: Ask user for details
+   - Do NOT assume or guess - always confirm first
+
+2. **Context file**:
+   - **Ask the user** for scene details (costume, pose, background)
+   - Edit ` + "`context.md`" + ` based on user's response
+   - Do NOT assume or guess - always confirm first
+
+3. **config.yaml** - Add or modify fields (do NOT replace entire file):
+` + "```yaml" + `
+character_file: <name>.md
+input_images:
+  - image1.png
+` + "```" + `
+
+4. **Reference images**:
+   - **Ask the user** what reference images to use
+   - Place provided images in ` + "`inputs/`" + `, add to ` + "`config.yaml`" + `
 
 ### Step 4: Create Prompt
 
