@@ -16,22 +16,11 @@ This shows whether you are in a subproject and its configuration.
 
 ### Step 2: Prepare Subproject
 
-**If no subproject exists or you need a new one:**
-` + "```bash" + `
-# List existing subprojects
-banago subproject list
+1. **Run** ` + "`banago subproject list`" + ` to check existing subprojects
+2. **If no suitable subproject exists, run** ` + "`banago subproject create <name>`" + ` to create one
+3. **Run** ` + "`cd subprojects/<name>`" + ` to navigate into the subproject
 
-# Create a new subproject
-banago subproject create <name> --description "Description"
-
-# Navigate to the subproject
-cd subprojects/<name>
-` + "```" + `
-
-**If a subproject already exists:**
-` + "```bash" + `
-cd subprojects/<name>
-` + "```" + `
+**Do NOT skip this step.** The subproject must exist and you must be inside it before proceeding.
 
 ### Step 3: Setup Subproject
 
@@ -141,17 +130,11 @@ banago status
 
 ### Step 2: Prepare Subproject
 
-**If no subproject exists:**
-` + "```bash" + `
-banago subproject list                    # List existing
-banago subproject create <name>           # Create new
-cd subprojects/<name>                     # Navigate
-` + "```" + `
+1. **Run** ` + "`banago subproject list`" + ` to check existing subprojects
+2. **If no suitable subproject exists, run** ` + "`banago subproject create <name>`" + ` to create one
+3. **Run** ` + "`cd subprojects/<name>`" + ` to navigate into the subproject
 
-**If subproject exists:**
-` + "```bash" + `
-cd subprojects/<name>
-` + "```" + `
+**Do NOT skip this step.**
 
 ### Step 3: Setup Subproject
 
@@ -243,17 +226,11 @@ Shows whether you are in a subproject and its configuration.
 
 ### Step 2: Prepare Subproject
 
-**If no subproject exists or you need a new one:**
-` + "```bash" + `
-banago subproject list                              # List existing
-banago subproject create <name> --description "..." # Create new
-cd subprojects/<name>                               # Navigate
-` + "```" + `
+1. **Run** ` + "`banago subproject list`" + ` to check existing subprojects
+2. **If no suitable subproject exists, run** ` + "`banago subproject create <name>`" + ` to create one
+3. **Run** ` + "`cd subprojects/<name>`" + ` to navigate into the subproject
 
-**If a subproject already exists:**
-` + "```bash" + `
-cd subprojects/<name>
-` + "```" + `
+**Do NOT skip this step.** The subproject must exist and you must be inside it before proceeding.
 
 ### Step 3: Setup Subproject
 
