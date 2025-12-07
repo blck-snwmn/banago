@@ -70,20 +70,22 @@ var statusCmd = &cobra.Command{
 		}
 		fmt.Fprintln(w, "")
 
-		// Character file
-		if subprojectCfg.CharacterFile != "" {
-			characterPath := filepath.Join(projectRoot, config.CharactersDir, subprojectCfg.CharacterFile)
-			if _, err := os.Stat(characterPath); err == nil {
-				fmt.Fprintf(w, "キャラクター: %s\n", subprojectCfg.CharacterFile)
-			} else {
-				fmt.Fprintf(w, "キャラクター: %s (見つかりません)\n", subprojectCfg.CharacterFile)
-			}
-		}
-
 		// Context file
 		contextPath := filepath.Join(subprojectDir, subprojectCfg.ContextFile)
 		if _, err := os.Stat(contextPath); err == nil {
-			fmt.Fprintf(w, "コンテキスト: %s\n", subprojectCfg.ContextFile)
+			relPath, _ := filepath.Rel(cwd, contextPath)
+			fmt.Fprintf(w, "コンテキスト: %s\n", relPath)
+		}
+
+		// Character file
+		if subprojectCfg.CharacterFile != "" {
+			characterPath := filepath.Join(projectRoot, config.CharactersDir, subprojectCfg.CharacterFile)
+			relPath, _ := filepath.Rel(cwd, characterPath)
+			if _, err := os.Stat(characterPath); err == nil {
+				fmt.Fprintf(w, "キャラクター: %s\n", relPath)
+			} else {
+				fmt.Fprintf(w, "キャラクター: %s (見つかりません)\n", relPath)
+			}
 		}
 		fmt.Fprintln(w, "")
 
@@ -95,10 +97,11 @@ var statusCmd = &cobra.Command{
 			inputsDir := config.GetInputsDir(subprojectDir)
 			for _, img := range subprojectCfg.InputImages {
 				imgPath := filepath.Join(inputsDir, img)
+				relPath, _ := filepath.Rel(cwd, imgPath)
 				if _, err := os.Stat(imgPath); err == nil {
-					fmt.Fprintf(w, "  %s\n", img)
+					fmt.Fprintf(w, "  %s\n", relPath)
 				} else {
-					fmt.Fprintf(w, "  %s (見つかりません)\n", img)
+					fmt.Fprintf(w, "  %s (見つかりません)\n", relPath)
 				}
 			}
 		}
