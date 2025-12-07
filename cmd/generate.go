@@ -35,17 +35,17 @@ var genOpts generateOptions
 
 var generateCmd = &cobra.Command{
 	Use:   "generate",
-	Short: "画像を生成する",
-	Long: `Gemini API を用いて画像を生成します。
+	Short: "Generate images",
+	Long: `Generate images using the Gemini API.
 
-サブプロジェクト内で実行する場合:
-  - config.yaml の input_images が自動的に使用されます
-  - 生成結果は history/ に自動保存されます
-  - --image で追加の画像を指定できます
+When running inside a subproject:
+  - input_images from config.yaml are automatically used
+  - Results are saved to history/
+  - Additional images can be specified with --image
 
-サブプロジェクト外で実行する場合:
-  - --image で画像を指定する必要があります
-  - 生成結果は --output-dir に保存されます`,
+When running outside a subproject:
+  - Images must be specified with --image
+  - Results are saved to --output-dir`,
 	Args: cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, _ []string) error {
 		if err := requireAPIKey(); err != nil {
@@ -60,18 +60,18 @@ var generateCmd = &cobra.Command{
 		if genOpts.promptFile != "" {
 			data, err := os.ReadFile(genOpts.promptFile)
 			if err != nil {
-				return fmt.Errorf("プロンプトファイルの読み込みに失敗しました: %w", err)
+				return fmt.Errorf("failed to read prompt file: %w", err)
 			}
 			promptText = strings.TrimSpace(string(data))
 		}
 		if promptText == "" {
-			return errors.New("プロンプトが空です。--prompt か --prompt-file で内容を指定してください")
+			return errors.New("prompt is empty. Specify with --prompt or --prompt-file")
 		}
 
 		// Check if we're in a subproject
 		cwd, err := os.Getwd()
 		if err != nil {
-			return fmt.Errorf("カレントディレクトリの取得に失敗しました: %w", err)
+			return fmt.Errorf("failed to get current directory: %w", err)
 		}
 
 		projectRoot, projectErr := project.FindProjectRoot(cwd)
@@ -85,7 +85,7 @@ var generateCmd = &cobra.Command{
 				subprojectDir = config.GetSubprojectDir(projectRoot, subprojectName)
 				subprojectCfg, err = config.LoadSubprojectConfig(subprojectDir)
 				if err != nil {
-					return fmt.Errorf("サブプロジェクト設定の読み込みに失敗しました: %w", err)
+					return fmt.Errorf("failed to load subproject config: %w", err)
 				}
 			}
 		}
@@ -102,7 +102,7 @@ var generateCmd = &cobra.Command{
 		imagePaths = append(imagePaths, genOpts.images...)
 
 		if len(imagePaths) == 0 {
-			return errors.New("画像が指定されていません。--image で指定するか、サブプロジェクトの config.yaml に input_images を設定してください")
+			return errors.New("no images specified. Use --image or set input_images in subproject config.yaml")
 		}
 
 		// Determine aspect ratio and size
@@ -121,7 +121,7 @@ var generateCmd = &cobra.Command{
 		ctx := context.Background()
 		client, err := genai.NewClient(ctx, &genai.ClientConfig{APIKey: cfg.apiKey, Backend: genai.BackendGeminiAPI})
 		if err != nil {
-			return fmt.Errorf("クライアント初期化に失敗しました: %w", err)
+			return fmt.Errorf("failed to initialize client: %w", err)
 		}
 
 		parts := []*genai.Part{genai.NewPartFromText(promptText)}
@@ -163,10 +163,10 @@ var generateCmd = &cobra.Command{
 
 			// Save prompt
 			if err := os.MkdirAll(entryDir, 0o755); err != nil {
-				return fmt.Errorf("履歴ディレクトリの作成に失敗しました: %w", err)
+				return fmt.Errorf("failed to create history directory: %w", err)
 			}
 			if err := entry.SavePrompt(historyDir, promptText); err != nil {
-				return fmt.Errorf("プロンプトの保存に失敗しました: %w", err)
+				return fmt.Errorf("failed to save prompt: %w", err)
 			}
 
 			// Save context file
@@ -174,7 +174,7 @@ var generateCmd = &cobra.Command{
 				contextPath := filepath.Join(subprojectDir, subprojectCfg.ContextFile)
 				if _, statErr := os.Stat(contextPath); statErr == nil {
 					if err := entry.SaveContextFile(historyDir, contextPath); err != nil {
-						_, _ = fmt.Fprintf(w, "警告: コンテキストファイルの保存に失敗しました: %v\n", err)
+						_, _ = fmt.Fprintf(w, "Warning: failed to save context file: %v\n", err)
 					} else {
 						entry.Generation.ContextFile = history.ContextFile
 					}
@@ -186,7 +186,7 @@ var generateCmd = &cobra.Command{
 				characterPath := filepath.Join(projectRoot, config.CharactersDir, subprojectCfg.CharacterFile)
 				if _, statErr := os.Stat(characterPath); statErr == nil {
 					if err := entry.SaveCharacterFile(historyDir, characterPath); err != nil {
-						_, _ = fmt.Fprintf(w, "警告: キャラクターファイルの保存に失敗しました: %v\n", err)
+						_, _ = fmt.Fprintf(w, "Warning: failed to save character file: %v\n", err)
 					} else {
 						entry.Generation.CharacterFile = history.CharacterFile
 					}
@@ -198,9 +198,9 @@ var generateCmd = &cobra.Command{
 				entry.Result.Success = false
 				entry.Result.ErrorMessage = err.Error()
 				if saveErr := entry.Save(historyDir); saveErr != nil {
-					_, _ = fmt.Fprintf(w, "警告: 履歴の保存に失敗しました: %v\n", saveErr)
+					_, _ = fmt.Fprintf(w, "Warning: failed to save history: %v\n", saveErr)
 				}
-				return fmt.Errorf("画像生成に失敗しました: %w", err)
+				return fmt.Errorf("failed to generate image: %w", err)
 			}
 
 			// Save generated images
@@ -209,7 +209,7 @@ var generateCmd = &cobra.Command{
 				entry.Result.Success = false
 				entry.Result.ErrorMessage = saveErr.Error()
 				if err := entry.Save(historyDir); err != nil {
-					_, _ = fmt.Fprintf(w, "警告: 履歴の保存に失敗しました: %v\n", err)
+					_, _ = fmt.Fprintf(w, "Warning: failed to save history: %v\n", err)
 				}
 				return saveErr
 			}
@@ -230,20 +230,20 @@ var generateCmd = &cobra.Command{
 			}
 
 			if err := entry.Save(historyDir); err != nil {
-				_, _ = fmt.Fprintf(w, "警告: 履歴の保存に失敗しました: %v\n", err)
+				_, _ = fmt.Fprintf(w, "Warning: failed to save history: %v\n", err)
 			}
 
 			// Output
-			_, _ = fmt.Fprintf(w, "履歴ID: %s\n", entry.ID)
+			_, _ = fmt.Fprintf(w, "History ID: %s\n", entry.ID)
 			_, _ = fmt.Fprintln(w, "")
-			_, _ = fmt.Fprintln(w, "生成されたファイル:")
+			_, _ = fmt.Fprintln(w, "Generated files:")
 			for _, s := range saved {
 				_, _ = fmt.Fprintf(w, "  %s\n", filepath.Base(s))
 			}
 		} else {
 			// Legacy mode: save to output directory
 			if err != nil {
-				return fmt.Errorf("画像生成に失敗しました: %w", err)
+				return fmt.Errorf("failed to generate image: %w", err)
 			}
 
 			saved, err := saveInlineImages(resp, genOpts.outputDir, genOpts.prefix)
@@ -251,7 +251,7 @@ var generateCmd = &cobra.Command{
 				return err
 			}
 
-			_, _ = fmt.Fprintln(w, "生成されたファイル:")
+			_, _ = fmt.Fprintln(w, "Generated files:")
 			for _, path := range saved {
 				_, _ = fmt.Fprintf(w, "  %s\n", filepath.Base(path))
 			}
@@ -259,14 +259,14 @@ var generateCmd = &cobra.Command{
 
 		if text := strings.TrimSpace(resp.Text()); text != "" {
 			_, _ = fmt.Fprintln(w, "")
-			_, _ = fmt.Fprintln(w, "テキスト応答:")
+			_, _ = fmt.Fprintln(w, "Text response:")
 			_, _ = fmt.Fprintln(w, text)
 		}
 
 		if resp.UsageMetadata != nil {
 			usage := resp.UsageMetadata
 			_, _ = fmt.Fprintln(w, "")
-			_, _ = fmt.Fprintln(w, "トークン使用量:")
+			_, _ = fmt.Fprintln(w, "Token usage:")
 			_, _ = fmt.Fprintf(w, "  prompt: %d\n", usage.PromptTokenCount)
 			_, _ = fmt.Fprintf(w, "  candidates: %d\n", usage.CandidatesTokenCount)
 			_, _ = fmt.Fprintf(w, "  total: %d\n", usage.TotalTokenCount)
@@ -285,13 +285,13 @@ var generateCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(generateCmd)
 
-	generateCmd.Flags().StringVarP(&genOpts.prompt, "prompt", "p", "", "生成に使うプロンプト")
-	generateCmd.Flags().StringVarP(&genOpts.promptFile, "prompt-file", "F", "", "プロンプトを含むテキストファイルへのパス")
-	generateCmd.Flags().StringSliceVarP(&genOpts.images, "image", "i", nil, "プロンプトと一緒に送る画像ファイル (複数指定可)")
-	generateCmd.Flags().StringVarP(&genOpts.outputDir, "output-dir", "o", "dist", "生成画像を保存するディレクトリ (サブプロジェクト外の場合)")
-	generateCmd.Flags().StringVar(&genOpts.prefix, "prefix", "generated", "保存ファイル名のプレフィックス (サブプロジェクト外の場合)")
-	generateCmd.Flags().StringVar(&genOpts.aspect, "aspect", "", "出力画像のアスペクト比 (例: 1:1, 16:9)")
-	generateCmd.Flags().StringVar(&genOpts.size, "size", "", "出力画像のサイズ (1K / 2K / 4K)")
+	generateCmd.Flags().StringVarP(&genOpts.prompt, "prompt", "p", "", "Prompt for generation")
+	generateCmd.Flags().StringVarP(&genOpts.promptFile, "prompt-file", "F", "", "Path to text file containing prompt")
+	generateCmd.Flags().StringSliceVarP(&genOpts.images, "image", "i", nil, "Image files to send with prompt (can specify multiple)")
+	generateCmd.Flags().StringVarP(&genOpts.outputDir, "output-dir", "o", "dist", "Directory to save generated images (outside subproject)")
+	generateCmd.Flags().StringVar(&genOpts.prefix, "prefix", "generated", "Filename prefix for saved files (outside subproject)")
+	generateCmd.Flags().StringVar(&genOpts.aspect, "aspect", "", "Output image aspect ratio (e.g., 1:1, 16:9)")
+	generateCmd.Flags().StringVar(&genOpts.size, "size", "", "Output image size (1K / 2K / 4K)")
 
 	generateCmd.MarkFlagsOneRequired("prompt", "prompt-file")
 	generateCmd.MarkFlagsMutuallyExclusive("prompt", "prompt-file")
@@ -300,27 +300,27 @@ func init() {
 func imagePartFromFile(path string) (*genai.Part, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return nil, fmt.Errorf("画像の読み込みに失敗しました (%s): %w", path, err)
+		return nil, fmt.Errorf("failed to read image (%s): %w", path, err)
 	}
 	mimeType := mime.TypeByExtension(strings.ToLower(filepath.Ext(path)))
 	if mimeType == "" {
 		mimeType = http.DetectContentType(data)
 	}
 	if !strings.HasPrefix(mimeType, "image/") {
-		return nil, fmt.Errorf("画像 MIME を判定できませんでした (%s): %s", path, mimeType)
+		return nil, fmt.Errorf("could not determine image MIME type (%s): %s", path, mimeType)
 	}
 	return genai.NewPartFromBytes(data, mimeType), nil
 }
 
 func saveInlineImages(resp *genai.GenerateContentResponse, dir, prefix string) ([]string, error) {
 	if resp == nil {
-		return nil, errors.New("レスポンスが空です")
+		return nil, errors.New("response is empty")
 	}
 	runID := uuid.Must(uuid.NewV7())
 	dir = cmp.Or(dir, "dist")
 	prefix = cmp.Or(prefix, "generated")
 	if err := os.MkdirAll(dir, 0o755); err != nil {
-		return nil, fmt.Errorf("出力ディレクトリの作成に失敗しました: %w", err)
+		return nil, fmt.Errorf("failed to create output directory: %w", err)
 	}
 
 	var saved []string
@@ -339,7 +339,7 @@ func saveInlineImages(resp *genai.GenerateContentResponse, dir, prefix string) (
 			fileName := fmt.Sprintf("%s-%s-%d%s", prefix, runID, imageIndex+1, ext)
 			fullPath := filepath.Join(dir, fileName)
 			if err := os.WriteFile(fullPath, part.InlineData.Data, 0o644); err != nil {
-				return nil, fmt.Errorf("画像の保存に失敗しました (%s): %w", fullPath, err)
+				return nil, fmt.Errorf("failed to save image (%s): %w", fullPath, err)
 			}
 			saved = append(saved, fullPath)
 			imageIndex++
@@ -347,7 +347,7 @@ func saveInlineImages(resp *genai.GenerateContentResponse, dir, prefix string) (
 	}
 
 	if len(saved) == 0 {
-		return nil, errors.New("画像レスポンスが見つかりませんでした")
+		return nil, errors.New("no image response found")
 	}
 
 	return saved, nil

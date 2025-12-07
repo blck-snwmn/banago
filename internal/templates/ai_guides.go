@@ -1,213 +1,213 @@
 package templates
 
-const ClaudeMD = `# banago プロジェクト - Claude Code 向けガイド
+const ClaudeMD = `# banago Project - Claude Code Guide
 
-## 概要
+## Overview
 
-このプロジェクトは banago CLI を使用した画像生成ワークフローです。
-あなたの役割は、コンテキスト情報と入力画像を参照して、高品質な画像生成プロンプトを作成することです。
+This project uses the banago CLI for image generation workflows.
+Your role is to read context information and input images, then create high-quality image generation prompts.
 
-## ワークフロー
+## Workflow
 
-### 1. コンテキスト確認
-現在のサブプロジェクトの ` + "`context.md`" + ` を読んでください。
-キャラクター設定、衣装詳細、生成目的が記載されています。
+### 1. Check Context
+Read the ` + "`context.md`" + ` in the current subproject.
+It contains character settings, costume details, and generation goals.
 
-キャラクター基本情報は ` + "`characters/`" + ` ディレクトリにあり、` + "`config.yaml`" + ` の ` + "`character_file`" + ` で参照されています。
+Character base information is in the ` + "`characters/`" + ` directory, referenced by ` + "`character_file`" + ` in ` + "`config.yaml`" + `.
 
-### 2. 入力画像確認
-` + "`inputs/`" + ` ディレクトリ内の参照画像を確認してください。
-これらは ` + "`config.yaml`" + ` の ` + "`input_images`" + ` で順序指定されています。
+### 2. Check Input Images
+Review the reference images in the ` + "`inputs/`" + ` directory.
+The order is specified by ` + "`input_images`" + ` in ` + "`config.yaml`" + `.
 
-### 3. 履歴参照（オプション）
-` + "`history/`" + ` 内の過去の生成結果を参照できます。
-各履歴には以下のファイルが保存されています:
-- ` + "`prompt.txt`" + `: 使用したプロンプト
-- ` + "`context.md`" + `: 生成時のコンテキスト情報
-- ` + "`character.md`" + `: 生成時のキャラクター情報（設定されている場合）
-- ` + "`output_*.png`" + `: 生成された画像
-- ` + "`meta.yaml`" + `: メタ情報
+### 3. Review History (Optional)
+You can reference past generation results in ` + "`history/`" + `.
+Each history entry contains:
+- ` + "`prompt.txt`" + `: The prompt used
+- ` + "`context.md`" + `: Context information at generation time
+- ` + "`character.md`" + `: Character information at generation time (if configured)
+- ` + "`output_*.png`" + `: Generated images
+- ` + "`meta.yaml`" + `: Metadata
 
-### 4. プロンプト生成と実行
-以下のコマンドで生成を実行してください:
+### 4. Generate
+Run generation with:
 
 ` + "```bash" + `
-banago generate --prompt-file <生成したプロンプトファイル>
+banago generate --prompt-file <prompt-file>
 ` + "```" + `
 
-## 利用可能なコマンド
+## Available Commands
 
-| コマンド | 説明 |
-|----------|------|
-| ` + "`banago status`" + ` | 現在のサブプロジェクト状態を表示 |
-| ` + "`banago history`" + ` | 生成履歴を表示 |
-| ` + "`banago generate --prompt \"...\"`" + ` | プロンプト指定で生成 |
-| ` + "`banago generate --prompt-file <path>`" + ` | ファイルからプロンプト読み込み |
+| Command | Description |
+|---------|-------------|
+| ` + "`banago status`" + ` | Show current subproject status |
+| ` + "`banago history`" + ` | Show generation history |
+| ` + "`banago generate --prompt \"...\"`" + ` | Generate with inline prompt |
+| ` + "`banago generate --prompt-file <path>`" + ` | Generate with prompt from file |
 
-## プロンプト作成ガイドライン
+## Prompt Guidelines
 
-1. **言語**: 英語推奨（Gemini の画像生成は英語の方が精度が高い）
-2. **構造**: 役割設定 → 制約条件 → 具体的な指示 → ゴール
-3. **詳細度**: 衣装ディテール、ポーズ、表情、背景を具体的に
-4. **禁止事項**: テキスト生成の明示的禁止を含める
+1. **Language**: English recommended (Gemini image generation works better with English)
+2. **Structure**: Role setting → Constraints → Specific instructions → Goal
+3. **Detail**: Be specific about costume details, poses, expressions, backgrounds
+4. **Restrictions**: Explicitly prohibit text generation
 
-## 重要な注意事項
+## Important Notes
 
-- **履歴ファイルは編集禁止**: ` + "`history/`" + ` 内のファイル（prompt.txt, context.md, character.md, meta.yaml）は**絶対に編集しないでください**。これらは生成時の状態を記録するためのアーカイブです。
-- プロンプトを改善する場合は、新しいプロンプトファイルを作成して ` + "`banago generate`" + ` を実行してください。
-- コンテキストを変更したい場合は、サブプロジェクト直下の ` + "`context.md`" + ` を編集してください。
+- **Do NOT edit history files**: Files in ` + "`history/`" + ` (prompt.txt, context.md, character.md, meta.yaml) must **never be edited**. They are archives recording the state at generation time.
+- To improve prompts, create a new prompt file and run ` + "`banago generate`" + `.
+- To change context, edit ` + "`context.md`" + ` in the subproject root.
 `
 
-const GeminiMD = `# banago プロジェクト - Gemini CLI 向けガイド
+const GeminiMD = `# banago Project - Gemini CLI Guide
 
-## 概要
+## Overview
 
-このプロジェクトは banago CLI を使用した画像生成ワークフローです。
-あなたの役割は、コンテキスト情報と入力画像を参照して、高品質な画像生成プロンプトを作成することです。
+This project uses the banago CLI for image generation workflows.
+Your role is to read context information and input images, then create high-quality image generation prompts.
 
-## モデル
+## Model
 
-このプロジェクトでは ` + "`gemini-3-pro-image-preview`" + ` を使用します。
+This project uses ` + "`gemini-3-pro-image-preview`" + `.
 
-## ワークフロー
+## Workflow
 
-### 1. 状態確認
-` + "`banago status`" + ` で現在のサブプロジェクトの状態を確認してください。
+### 1. Check Status
+Run ` + "`banago status`" + ` to check the current subproject status.
 
-### 2. コンテキスト確認
-- ` + "`characters/<name>.md`" + `: キャラクター基本情報
-- ` + "`context.md`" + `: サブプロジェクト固有の付加情報（衣装、シーンなど）
-- ` + "`inputs/`" + `: 参照画像
+### 2. Check Context
+- ` + "`characters/<name>.md`" + `: Character base information
+- ` + "`context.md`" + `: Subproject-specific information (costumes, scenes, etc.)
+- ` + "`inputs/`" + `: Reference images
 
-### 3. プロンプト生成と実行
+### 3. Generate
 ` + "```bash" + `
 banago generate --prompt-file <path>
 ` + "```" + `
 
-### 4. 改善サイクル
+### 4. Improvement Cycle
 ` + "```bash" + `
-banago history           # 履歴確認
-# 履歴の prompt.txt を参考に新しいプロンプトを作成して再実行
+banago history           # Check history
+# Reference prompt.txt from history and create a new prompt
 banago generate --prompt-file <new-prompt>
 ` + "```" + `
 
-## 利用可能なコマンド
+## Available Commands
 
-| コマンド | 説明 |
-|----------|------|
-| ` + "`banago status`" + ` | 現在のサブプロジェクト状態を表示 |
-| ` + "`banago history`" + ` | 生成履歴を表示 |
-| ` + "`banago generate`" + ` | 画像生成 |
+| Command | Description |
+|---------|-------------|
+| ` + "`banago status`" + ` | Show current subproject status |
+| ` + "`banago history`" + ` | Show generation history |
+| ` + "`banago generate`" + ` | Generate images |
 
-## 履歴の内容
+## History Contents
 
-各履歴エントリ（` + "`history/<uuid>/`" + `）には以下が保存されます:
-- ` + "`prompt.txt`" + `: 使用したプロンプト
-- ` + "`context.md`" + `: 生成時のコンテキスト情報
-- ` + "`character.md`" + `: 生成時のキャラクター情報（設定されている場合）
-- ` + "`output_*.png`" + `: 生成された画像
-- ` + "`meta.yaml`" + `: メタ情報
+Each history entry (` + "`history/<uuid>/`" + `) contains:
+- ` + "`prompt.txt`" + `: The prompt used
+- ` + "`context.md`" + `: Context information at generation time
+- ` + "`character.md`" + `: Character information at generation time (if configured)
+- ` + "`output_*.png`" + `: Generated images
+- ` + "`meta.yaml`" + `: Metadata
 
-## 重要な注意事項
+## Important Notes
 
-- **履歴ファイルは編集禁止**: ` + "`history/`" + ` 内のファイルは**絶対に編集しないでください**。これらは生成時の状態を記録するためのアーカイブです。
-- プロンプトを改善する場合は、履歴を参考に新しいプロンプトファイルを作成してください。
-- コンテキストを変更したい場合は、サブプロジェクト直下の ` + "`context.md`" + ` を編集してください。
+- **Do NOT edit history files**: Files in ` + "`history/`" + ` must **never be edited**. They are archives recording the state at generation time.
+- To improve prompts, reference history and create a new prompt file.
+- To change context, edit ` + "`context.md`" + ` in the subproject root.
 `
 
-const AgentsMD = `# banago プロジェクト - AI エージェント共通ガイド
+const AgentsMD = `# banago Project - AI Agent Common Guide
 
-## プロジェクト構造
+## Project Structure
 
 ` + "```" + `
 <project-root>/
-├── banago.yaml          # プロジェクト設定
-├── CLAUDE.md            # Claude Code 向けガイド
-├── GEMINI.md            # Gemini CLI 向けガイド
-├── AGENTS.md            # 本ファイル
-├── characters/          # 共通キャラクター定義
+├── banago.yaml          # Project config
+├── CLAUDE.md            # Claude Code guide
+├── GEMINI.md            # Gemini CLI guide
+├── AGENTS.md            # This file
+├── characters/          # Shared character definitions
 │   └── <name>.md
 └── subprojects/
     └── <name>/
-        ├── config.yaml   # サブプロジェクト設定
-        ├── context.md    # 付加情報（衣装、シーンなど）
-        ├── inputs/       # 入力画像
-        └── history/      # 生成履歴（UUID v7 ディレクトリ）
+        ├── config.yaml   # Subproject config
+        ├── context.md    # Additional info (costumes, scenes, etc.)
+        ├── inputs/       # Input images
+        └── history/      # Generation history (UUID v7 directories)
             └── <uuid>/
-                ├── prompt.txt    # 使用したプロンプト
-                ├── context.md    # 生成時のコンテキスト
-                ├── character.md  # 生成時のキャラクター情報
-                ├── meta.yaml     # メタ情報
-                └── output_*.png  # 生成画像
+                ├── prompt.txt    # Prompt used
+                ├── context.md    # Context at generation time
+                ├── character.md  # Character info at generation time
+                ├── meta.yaml     # Metadata
+                └── output_*.png  # Generated images
 ` + "```" + `
 
-## ワークフロー詳細
+## Detailed Workflow
 
-### 新規生成フロー
-1. ` + "`banago status`" + ` で現在の状態を確認
-2. ` + "`context.md`" + ` を読み込み、キャラクター情報を把握
-3. ` + "`inputs/`" + ` 内の参照画像を確認
-4. プロンプトを作成（ファイルに保存推奨）
-5. ` + "`banago generate --prompt-file <path>`" + ` で実行
+### New Generation Flow
+1. Run ` + "`banago status`" + ` to check current state
+2. Read ` + "`context.md`" + ` and understand character info
+3. Review reference images in ` + "`inputs/`" + `
+4. Create a prompt (save to file recommended)
+5. Run ` + "`banago generate --prompt-file <path>`" + `
 
-### 改善フロー
-1. ` + "`banago history`" + ` で過去の生成を確認
-2. 改善したいエントリの ` + "`prompt.txt`" + ` を参考に新しいプロンプトを作成
-3. 必要に応じて ` + "`context.md`" + ` を更新
-4. ` + "`banago generate --prompt-file <path>`" + ` で再実行
+### Improvement Flow
+1. Run ` + "`banago history`" + ` to check past generations
+2. Reference ` + "`prompt.txt`" + ` from the entry you want to improve
+3. Update ` + "`context.md`" + ` if needed
+4. Run ` + "`banago generate --prompt-file <path>`" + ` again
 
-## 重要な注意事項
+## Important Notes
 
-### 履歴ファイルの取り扱い（必読）
+### History File Handling (Required Reading)
 
-**` + "`history/`" + ` 内のファイルは絶対に編集しないでください。**
+**Do NOT edit files in ` + "`history/`" + `.**
 
-- ` + "`history/<uuid>/`" + ` 内のすべてのファイル（prompt.txt, context.md, character.md, meta.yaml）は生成時の状態を記録するアーカイブです
-- これらを編集すると、過去の生成を再現できなくなります
-- プロンプトを改善したい場合は、履歴を**参照**して新しいプロンプトファイルを作成してください
-- コンテキストを変更したい場合は、サブプロジェクト直下の ` + "`context.md`" + ` を編集してください
+- All files in ` + "`history/<uuid>/`" + ` (prompt.txt, context.md, character.md, meta.yaml) are archives recording the state at generation time
+- Editing these files will make it impossible to reproduce past generations
+- To improve prompts, **reference** history and create a new prompt file
+- To change context, edit ` + "`context.md`" + ` in the subproject root
 
-### その他の注意点
+### Other Notes
 
-- ` + "`inputs/`" + ` 内の画像は変更しないでください（履歴との整合性のため）
-- 履歴はUUID v7でソートされるため、時系列順に並びます
+- Do NOT modify images in ` + "`inputs/`" + ` (for history consistency)
+- History is sorted by UUID v7, which is chronological
 `
 
-const DefaultContextMD = `# コンテキスト情報
+const DefaultContextMD = `# Context Information
 
-このファイルにはサブプロジェクト固有の付加情報を記載してください。
+Add subproject-specific information here.
 
-## 衣装・外見の詳細
+## Costume/Appearance Details
 
-（ここに衣装やスタイルの詳細を記載）
+(Describe costume and style details here)
 
-## シーン設定
+## Scene Setting
 
-（ここに背景やシチュエーションの説明を記載）
+(Describe background and situation here)
 
-## 生成時の注意点
+## Generation Notes
 
-（ここに特に注意すべきポイントを記載）
+(Add specific points to note here)
 `
 
-const DefaultCharacterMD = `# キャラクター情報
+const DefaultCharacterMD = `# Character Information
 
-このファイルにはキャラクターの基本情報を記載してください。
+Add character base information here.
 
-## 基本プロフィール
+## Basic Profile
 
-- 名前:
-- 性別:
-- 年齢:
+- Name:
+- Gender:
+- Age:
 
-## 外見の特徴
+## Appearance
 
-- 髪の色・スタイル:
-- 目の色:
-- 体型:
-- 特徴的な点:
+- Hair color/style:
+- Eye color:
+- Body type:
+- Distinctive features:
 
-## 性格・設定
+## Personality/Setting
 
-（ここにキャラクターの性格や背景設定を記載）
+(Describe character personality and background here)
 `

@@ -14,19 +14,19 @@ import (
 
 var statusCmd = &cobra.Command{
 	Use:   "status",
-	Short: "現在のサブプロジェクトの状態を表示する",
-	Long:  "現在のディレクトリに関連するサブプロジェクトの状態を表示します。",
+	Short: "Show current subproject status",
+	Long:  "Display the status of the current directory's subproject.",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, _ []string) error {
 		cwd, err := os.Getwd()
 		if err != nil {
-			return fmt.Errorf("カレントディレクトリの取得に失敗しました: %w", err)
+			return fmt.Errorf("failed to get current directory: %w", err)
 		}
 
 		projectRoot, err := project.FindProjectRoot(cwd)
 		if err != nil {
 			if errors.Is(err, project.ErrProjectNotFound) {
-				return fmt.Errorf("banago プロジェクトが見つかりません。先に banago init を実行してください")
+				return fmt.Errorf("banago project not found. Run 'banago init' first")
 			}
 			return err
 		}
@@ -34,7 +34,7 @@ var statusCmd = &cobra.Command{
 		// Load project config
 		projectCfg, err := config.LoadProjectConfig(projectRoot)
 		if err != nil {
-			return fmt.Errorf("プロジェクト設定の読み込みに失敗しました: %w", err)
+			return fmt.Errorf("failed to load project config: %w", err)
 		}
 
 		w := cmd.OutOrStdout()
@@ -44,11 +44,11 @@ var statusCmd = &cobra.Command{
 		if err != nil {
 			if errors.Is(err, project.ErrNotInSubproject) {
 				// Show project-level status
-				_, _ = fmt.Fprintf(w, "プロジェクト: %s\n", projectCfg.Name)
-				_, _ = fmt.Fprintf(w, "モデル: %s\n", projectCfg.Model)
+				_, _ = fmt.Fprintf(w, "Project: %s\n", projectCfg.Name)
+				_, _ = fmt.Fprintf(w, "Model: %s\n", projectCfg.Model)
 				_, _ = fmt.Fprintln(w, "")
-				_, _ = fmt.Fprintln(w, "サブプロジェクト内にいません。")
-				_, _ = fmt.Fprintln(w, "サブプロジェクトに移動するか、新しく作成してください:")
+				_, _ = fmt.Fprintln(w, "Not in a subproject.")
+				_, _ = fmt.Fprintln(w, "Navigate to a subproject or create one:")
 				_, _ = fmt.Fprintln(w, "  cd subprojects/<name>")
 				_, _ = fmt.Fprintln(w, "  banago subproject create <name>")
 				return nil
@@ -60,13 +60,13 @@ var statusCmd = &cobra.Command{
 		subprojectDir := config.GetSubprojectDir(projectRoot, subprojectName)
 		subprojectCfg, err := config.LoadSubprojectConfig(subprojectDir)
 		if err != nil {
-			return fmt.Errorf("サブプロジェクト設定の読み込みに失敗しました: %w", err)
+			return fmt.Errorf("failed to load subproject config: %w", err)
 		}
 
-		_, _ = fmt.Fprintf(w, "プロジェクト: %s\n", projectCfg.Name)
-		_, _ = fmt.Fprintf(w, "サブプロジェクト: %s\n", subprojectCfg.Name)
+		_, _ = fmt.Fprintf(w, "Project: %s\n", projectCfg.Name)
+		_, _ = fmt.Fprintf(w, "Subproject: %s\n", subprojectCfg.Name)
 		if subprojectCfg.Description != "" {
-			_, _ = fmt.Fprintf(w, "説明: %s\n", subprojectCfg.Description)
+			_, _ = fmt.Fprintf(w, "Description: %s\n", subprojectCfg.Description)
 		}
 		_, _ = fmt.Fprintln(w, "")
 
@@ -74,7 +74,7 @@ var statusCmd = &cobra.Command{
 		contextPath := filepath.Join(subprojectDir, subprojectCfg.ContextFile)
 		if _, err := os.Stat(contextPath); err == nil {
 			relPath, _ := filepath.Rel(cwd, contextPath)
-			_, _ = fmt.Fprintf(w, "コンテキスト: %s\n", relPath)
+			_, _ = fmt.Fprintf(w, "Context: %s\n", relPath)
 		}
 
 		// Character file
@@ -82,17 +82,17 @@ var statusCmd = &cobra.Command{
 			characterPath := filepath.Join(projectRoot, config.CharactersDir, subprojectCfg.CharacterFile)
 			relPath, _ := filepath.Rel(cwd, characterPath)
 			if _, err := os.Stat(characterPath); err == nil {
-				_, _ = fmt.Fprintf(w, "キャラクター: %s\n", relPath)
+				_, _ = fmt.Fprintf(w, "Character: %s\n", relPath)
 			} else {
-				_, _ = fmt.Fprintf(w, "キャラクター: %s (見つかりません)\n", relPath)
+				_, _ = fmt.Fprintf(w, "Character: %s (not found)\n", relPath)
 			}
 		}
 		_, _ = fmt.Fprintln(w, "")
 
 		// Input images
-		_, _ = fmt.Fprintln(w, "入力画像:")
+		_, _ = fmt.Fprintln(w, "Input images:")
 		if len(subprojectCfg.InputImages) == 0 {
-			_, _ = fmt.Fprintln(w, "  (なし)")
+			_, _ = fmt.Fprintln(w, "  (none)")
 		} else {
 			inputsDir := config.GetInputsDir(subprojectDir)
 			for _, img := range subprojectCfg.InputImages {
@@ -101,7 +101,7 @@ var statusCmd = &cobra.Command{
 				if _, err := os.Stat(imgPath); err == nil {
 					_, _ = fmt.Fprintf(w, "  %s\n", relPath)
 				} else {
-					_, _ = fmt.Fprintf(w, "  %s (見つかりません)\n", relPath)
+					_, _ = fmt.Fprintf(w, "  %s (not found)\n", relPath)
 				}
 			}
 		}
@@ -111,14 +111,14 @@ var statusCmd = &cobra.Command{
 		historyDir := config.GetHistoryDir(subprojectDir)
 		entries, err := history.ListEntries(historyDir)
 		if err != nil {
-			_, _ = fmt.Fprintln(w, "履歴: (読み込みエラー)")
+			_, _ = fmt.Fprintln(w, "History: (load error)")
 		} else if len(entries) == 0 {
-			_, _ = fmt.Fprintln(w, "履歴: なし")
+			_, _ = fmt.Fprintln(w, "History: none")
 		} else {
-			_, _ = fmt.Fprintf(w, "履歴: %d 件\n", len(entries))
+			_, _ = fmt.Fprintf(w, "History: %d entries\n", len(entries))
 			// Show latest entry
 			latest := entries[len(entries)-1]
-			_, _ = fmt.Fprintf(w, "  最新: %s (%s)\n", latest.ID[:8]+"...", latest.CreatedAt[:10])
+			_, _ = fmt.Fprintf(w, "  Latest: %s (%s)\n", latest.ID[:8]+"...", latest.CreatedAt[:10])
 		}
 
 		return nil
