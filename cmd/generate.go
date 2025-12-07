@@ -156,9 +156,7 @@ var generateCmd = &cobra.Command{
 			entry.Generation.PromptFile = history.PromptFile
 
 			// Extract input image filenames
-			for _, img := range subprojectCfg.InputImages {
-				entry.Generation.InputImages = append(entry.Generation.InputImages, img)
-			}
+			entry.Generation.InputImages = append(entry.Generation.InputImages, subprojectCfg.InputImages...)
 
 			historyDir := config.GetHistoryDir(subprojectDir)
 			entryDir := entry.GetEntryDir(historyDir)
@@ -176,7 +174,7 @@ var generateCmd = &cobra.Command{
 				contextPath := filepath.Join(subprojectDir, subprojectCfg.ContextFile)
 				if _, statErr := os.Stat(contextPath); statErr == nil {
 					if err := entry.SaveContextFile(historyDir, contextPath); err != nil {
-						fmt.Fprintf(w, "警告: コンテキストファイルの保存に失敗しました: %v\n", err)
+						_, _ = fmt.Fprintf(w, "警告: コンテキストファイルの保存に失敗しました: %v\n", err)
 					} else {
 						entry.Generation.ContextFile = history.ContextFile
 					}
@@ -188,7 +186,7 @@ var generateCmd = &cobra.Command{
 				characterPath := filepath.Join(projectRoot, config.CharactersDir, subprojectCfg.CharacterFile)
 				if _, statErr := os.Stat(characterPath); statErr == nil {
 					if err := entry.SaveCharacterFile(historyDir, characterPath); err != nil {
-						fmt.Fprintf(w, "警告: キャラクターファイルの保存に失敗しました: %v\n", err)
+						_, _ = fmt.Fprintf(w, "警告: キャラクターファイルの保存に失敗しました: %v\n", err)
 					} else {
 						entry.Generation.CharacterFile = history.CharacterFile
 					}
@@ -200,7 +198,7 @@ var generateCmd = &cobra.Command{
 				entry.Result.Success = false
 				entry.Result.ErrorMessage = err.Error()
 				if saveErr := entry.Save(historyDir); saveErr != nil {
-					fmt.Fprintf(w, "警告: 履歴の保存に失敗しました: %v\n", saveErr)
+					_, _ = fmt.Fprintf(w, "警告: 履歴の保存に失敗しました: %v\n", saveErr)
 				}
 				return fmt.Errorf("画像生成に失敗しました: %w", err)
 			}
@@ -211,7 +209,7 @@ var generateCmd = &cobra.Command{
 				entry.Result.Success = false
 				entry.Result.ErrorMessage = saveErr.Error()
 				if err := entry.Save(historyDir); err != nil {
-					fmt.Fprintf(w, "警告: 履歴の保存に失敗しました: %v\n", err)
+					_, _ = fmt.Fprintf(w, "警告: 履歴の保存に失敗しました: %v\n", err)
 				}
 				return saveErr
 			}
@@ -232,15 +230,15 @@ var generateCmd = &cobra.Command{
 			}
 
 			if err := entry.Save(historyDir); err != nil {
-				fmt.Fprintf(w, "警告: 履歴の保存に失敗しました: %v\n", err)
+				_, _ = fmt.Fprintf(w, "警告: 履歴の保存に失敗しました: %v\n", err)
 			}
 
 			// Output
-			fmt.Fprintf(w, "履歴ID: %s\n", entry.ID)
-			fmt.Fprintln(w, "")
-			fmt.Fprintln(w, "生成されたファイル:")
+			_, _ = fmt.Fprintf(w, "履歴ID: %s\n", entry.ID)
+			_, _ = fmt.Fprintln(w, "")
+			_, _ = fmt.Fprintln(w, "生成されたファイル:")
 			for _, s := range saved {
-				fmt.Fprintf(w, "  %s\n", filepath.Base(s))
+				_, _ = fmt.Fprintf(w, "  %s\n", filepath.Base(s))
 			}
 		} else {
 			// Legacy mode: save to output directory
@@ -253,30 +251,30 @@ var generateCmd = &cobra.Command{
 				return err
 			}
 
-			fmt.Fprintln(w, "生成されたファイル:")
+			_, _ = fmt.Fprintln(w, "生成されたファイル:")
 			for _, path := range saved {
-				fmt.Fprintf(w, "  %s\n", filepath.Base(path))
+				_, _ = fmt.Fprintf(w, "  %s\n", filepath.Base(path))
 			}
 		}
 
 		if text := strings.TrimSpace(resp.Text()); text != "" {
-			fmt.Fprintln(w, "")
-			fmt.Fprintln(w, "テキスト応答:")
-			fmt.Fprintln(w, text)
+			_, _ = fmt.Fprintln(w, "")
+			_, _ = fmt.Fprintln(w, "テキスト応答:")
+			_, _ = fmt.Fprintln(w, text)
 		}
 
 		if resp.UsageMetadata != nil {
 			usage := resp.UsageMetadata
-			fmt.Fprintln(w, "")
-			fmt.Fprintln(w, "トークン使用量:")
-			fmt.Fprintf(w, "  prompt: %d\n", usage.PromptTokenCount)
-			fmt.Fprintf(w, "  candidates: %d\n", usage.CandidatesTokenCount)
-			fmt.Fprintf(w, "  total: %d\n", usage.TotalTokenCount)
+			_, _ = fmt.Fprintln(w, "")
+			_, _ = fmt.Fprintln(w, "トークン使用量:")
+			_, _ = fmt.Fprintf(w, "  prompt: %d\n", usage.PromptTokenCount)
+			_, _ = fmt.Fprintf(w, "  candidates: %d\n", usage.CandidatesTokenCount)
+			_, _ = fmt.Fprintf(w, "  total: %d\n", usage.TotalTokenCount)
 			if usage.CachedContentTokenCount > 0 {
-				fmt.Fprintf(w, "  cached: %d\n", usage.CachedContentTokenCount)
+				_, _ = fmt.Fprintf(w, "  cached: %d\n", usage.CachedContentTokenCount)
 			}
 			if usage.ThoughtsTokenCount > 0 {
-				fmt.Fprintf(w, "  thoughts: %d\n", usage.ThoughtsTokenCount)
+				_, _ = fmt.Fprintf(w, "  thoughts: %d\n", usage.ThoughtsTokenCount)
 			}
 		}
 

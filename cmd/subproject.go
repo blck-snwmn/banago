@@ -51,12 +51,12 @@ var subprojectCreateCmd = &cobra.Command{
 		}
 
 		w := cmd.OutOrStdout()
-		fmt.Fprintf(w, "サブプロジェクト '%s' を作成しました\n", name)
-		fmt.Fprintln(w, "")
-		fmt.Fprintln(w, "次のステップ:")
-		fmt.Fprintf(w, "  1. subprojects/%s/config.yaml でキャラクター参照を設定\n", name)
-		fmt.Fprintf(w, "  2. subprojects/%s/context.md に付加情報を記載\n", name)
-		fmt.Fprintf(w, "  3. subprojects/%s/inputs/ に参照画像を配置\n", name)
+		_, _ = fmt.Fprintf(w, "サブプロジェクト '%s' を作成しました\n", name)
+		_, _ = fmt.Fprintln(w, "")
+		_, _ = fmt.Fprintln(w, "次のステップ:")
+		_, _ = fmt.Fprintf(w, "  1. subprojects/%s/config.yaml でキャラクター参照を設定\n", name)
+		_, _ = fmt.Fprintf(w, "  2. subprojects/%s/context.md に付加情報を記載\n", name)
+		_, _ = fmt.Fprintf(w, "  3. subprojects/%s/inputs/ に参照画像を配置\n", name)
 
 		return nil
 	},
@@ -87,20 +87,20 @@ var subprojectListCmd = &cobra.Command{
 
 		w := cmd.OutOrStdout()
 		if len(infos) == 0 {
-			fmt.Fprintln(w, "サブプロジェクトがありません")
-			fmt.Fprintln(w, "")
-			fmt.Fprintln(w, "新しいサブプロジェクトを作成するには:")
-			fmt.Fprintln(w, "  banago subproject create <name>")
+			_, _ = fmt.Fprintln(w, "サブプロジェクトがありません")
+			_, _ = fmt.Fprintln(w, "")
+			_, _ = fmt.Fprintln(w, "新しいサブプロジェクトを作成するには:")
+			_, _ = fmt.Fprintln(w, "  banago subproject create <name>")
 			return nil
 		}
 
-		fmt.Fprintln(w, "サブプロジェクト一覧:")
+		_, _ = fmt.Fprintln(w, "サブプロジェクト一覧:")
 		for _, info := range infos {
-			fmt.Fprintf(w, "  %s", info.Name)
+			_, _ = fmt.Fprintf(w, "  %s", info.Name)
 			if info.Description != "" {
-				fmt.Fprintf(w, " - %s", info.Description)
+				_, _ = fmt.Fprintf(w, " - %s", info.Description)
 			}
-			fmt.Fprintln(w)
+			_, _ = fmt.Fprintln(w)
 		}
 
 		return nil

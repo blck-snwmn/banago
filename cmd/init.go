@@ -47,19 +47,19 @@ var initCmd = &cobra.Command{
 		}
 
 		w := cmd.OutOrStdout()
-		fmt.Fprintf(w, "banago プロジェクト '%s' を初期化しました\n", name)
-		fmt.Fprintln(w, "")
-		fmt.Fprintln(w, "作成されたファイル:")
-		fmt.Fprintln(w, "  banago.yaml")
-		fmt.Fprintln(w, "  CLAUDE.md")
-		fmt.Fprintln(w, "  GEMINI.md")
-		fmt.Fprintln(w, "  AGENTS.md")
-		fmt.Fprintln(w, "  characters/")
-		fmt.Fprintln(w, "  subprojects/")
-		fmt.Fprintln(w, "")
-		fmt.Fprintln(w, "次のステップ:")
-		fmt.Fprintln(w, "  1. characters/ にキャラクター定義ファイルを作成")
-		fmt.Fprintln(w, "  2. banago subproject create <name> でサブプロジェクトを作成")
+		_, _ = fmt.Fprintf(w, "banago プロジェクト '%s' を初期化しました\n", name)
+		_, _ = fmt.Fprintln(w, "")
+		_, _ = fmt.Fprintln(w, "作成されたファイル:")
+		_, _ = fmt.Fprintln(w, "  banago.yaml")
+		_, _ = fmt.Fprintln(w, "  CLAUDE.md")
+		_, _ = fmt.Fprintln(w, "  GEMINI.md")
+		_, _ = fmt.Fprintln(w, "  AGENTS.md")
+		_, _ = fmt.Fprintln(w, "  characters/")
+		_, _ = fmt.Fprintln(w, "  subprojects/")
+		_, _ = fmt.Fprintln(w, "")
+		_, _ = fmt.Fprintln(w, "次のステップ:")
+		_, _ = fmt.Fprintln(w, "  1. characters/ にキャラクター定義ファイルを作成")
+		_, _ = fmt.Fprintln(w, "  2. banago subproject create <name> でサブプロジェクトを作成")
 
 		return nil
 	},

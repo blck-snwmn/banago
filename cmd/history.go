@@ -53,15 +53,15 @@ var historyCmd = &cobra.Command{
 		w := cmd.OutOrStdout()
 
 		if len(entries) == 0 {
-			fmt.Fprintln(w, "履歴がありません")
-			fmt.Fprintln(w, "")
-			fmt.Fprintln(w, "画像を生成するには:")
-			fmt.Fprintln(w, "  banago generate --prompt \"...\"")
+			_, _ = fmt.Fprintln(w, "履歴がありません")
+			_, _ = fmt.Fprintln(w, "")
+			_, _ = fmt.Fprintln(w, "画像を生成するには:")
+			_, _ = fmt.Fprintln(w, "  banago generate --prompt \"...\"")
 			return nil
 		}
 
-		fmt.Fprintf(w, "履歴 (%d 件):\n", len(entries))
-		fmt.Fprintln(w, "")
+		_, _ = fmt.Fprintf(w, "履歴 (%d 件):\n", len(entries))
+		_, _ = fmt.Fprintln(w, "")
 
 		// Show entries in reverse order (newest first)
 		start := 0
@@ -75,15 +75,15 @@ var historyCmd = &cobra.Command{
 			if !entry.Result.Success {
 				status = "✗"
 			}
-			fmt.Fprintf(w, "  %s %s\n", status, entry.ID)
-			fmt.Fprintf(w, "      日時: %s\n", entry.CreatedAt)
+			_, _ = fmt.Fprintf(w, "  %s %s\n", status, entry.ID)
+			_, _ = fmt.Fprintf(w, "      日時: %s\n", entry.CreatedAt)
 			if entry.Result.Success && len(entry.Result.OutputImages) > 0 {
-				fmt.Fprintf(w, "      出力: %d 枚\n", len(entry.Result.OutputImages))
+				_, _ = fmt.Fprintf(w, "      出力: %d 枚\n", len(entry.Result.OutputImages))
 			}
 			if !entry.Result.Success && entry.Result.ErrorMessage != "" {
-				fmt.Fprintf(w, "      エラー: %s\n", entry.Result.ErrorMessage)
+				_, _ = fmt.Fprintf(w, "      エラー: %s\n", entry.Result.ErrorMessage)
 			}
-			fmt.Fprintln(w, "")
+			_, _ = fmt.Fprintln(w, "")
 		}
 
 		return nil
