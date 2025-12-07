@@ -37,6 +37,10 @@ var generateCmd = &cobra.Command{
 	Long:  "Gemini 公式 SDK を用いて gemini-3-pro-image-preview (Nano Banana Pro) で画像を生成します。プロンプト必須、参考画像は複数指定可能です。",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, _ []string) error {
+		if err := requireAPIKey(); err != nil {
+			return err
+		}
+
 		var promptText string
 		if genOpts.prompt != "" {
 			promptText = strings.TrimSpace(genOpts.prompt)

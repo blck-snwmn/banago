@@ -30,17 +30,16 @@ func Execute() {
 
 func init() {
 	rootCmd.PersistentFlags().StringVar(&cfg.apiKey, "api-key", "", "Gemini API キー。未指定なら環境変数 GEMINI_API_KEY を利用")
-	rootCmd.PersistentPreRunE = func(cmd *cobra.Command, _ []string) error {
-		// help サブコマンドでは API キーを要求しない
-		if cmd.CalledAs() == "help" {
-			return nil
-		}
-		if strings.TrimSpace(cfg.apiKey) == "" {
-			cfg.apiKey = strings.TrimSpace(os.Getenv("GEMINI_API_KEY"))
-		}
-		if cfg.apiKey == "" {
-			return errors.New("API キーがありません。--api-key か環境変数 GEMINI_API_KEY を設定してください")
-		}
-		return nil
+}
+
+// requireAPIKey checks if the API key is set and returns an error if not.
+// Should be called by commands that require the API key (generate, regenerate).
+func requireAPIKey() error {
+	if strings.TrimSpace(cfg.apiKey) == "" {
+		cfg.apiKey = strings.TrimSpace(os.Getenv("GEMINI_API_KEY"))
 	}
+	if cfg.apiKey == "" {
+		return errors.New("API キーがありません。--api-key か環境変数 GEMINI_API_KEY を設定してください")
+	}
+	return nil
 }
