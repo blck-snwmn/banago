@@ -11,31 +11,24 @@ import (
 
 // ProjectConfig represents the root project configuration (banago.yaml)
 type ProjectConfig struct {
-	Version   string          `yaml:"version"`
-	Name      string          `yaml:"name"`
-	Model     string          `yaml:"model"`
-	CreatedAt string          `yaml:"created_at"`
-	Defaults  ProjectDefaults `yaml:"defaults,omitempty"`
-}
-
-// ProjectDefaults contains default generation parameters
-type ProjectDefaults struct {
-	AspectRatio string `yaml:"aspect_ratio,omitempty"`
-	ImageSize   string `yaml:"image_size,omitempty"`
+	Version   string `yaml:"version"`
+	Name      string `yaml:"name"`
+	Model     string `yaml:"model"`
+	CreatedAt string `yaml:"created_at"`
 }
 
 const (
-	ProjectConfigFile = "banago.yaml"
-	DefaultModel      = "gemini-3-pro-image-preview"
-	ConfigVersion     = "1.0"
+	projectConfigFile = "banago.yaml"
+	defaultModel      = "gemini-3-pro-image-preview"
+	configVersion     = "1.0"
 )
 
 // NewProjectConfig creates a new project configuration with defaults
 func NewProjectConfig(name string) *ProjectConfig {
 	return &ProjectConfig{
-		Version:   ConfigVersion,
+		Version:   configVersion,
 		Name:      name,
-		Model:     DefaultModel,
+		Model:     defaultModel,
 		CreatedAt: time.Now().UTC().Format(time.RFC3339),
 	}
 }
@@ -47,7 +40,7 @@ func (c *ProjectConfig) Save(dir string) error {
 		return fmt.Errorf("failed to marshal project config: %w", err)
 	}
 
-	path := filepath.Join(dir, ProjectConfigFile)
+	path := filepath.Join(dir, projectConfigFile)
 	if err := os.WriteFile(path, data, 0o644); err != nil {
 		return fmt.Errorf("failed to write project config: %w", err)
 	}
@@ -57,7 +50,7 @@ func (c *ProjectConfig) Save(dir string) error {
 
 // LoadProjectConfig reads a project configuration from the specified directory
 func LoadProjectConfig(dir string) (*ProjectConfig, error) {
-	path := filepath.Join(dir, ProjectConfigFile)
+	path := filepath.Join(dir, projectConfigFile)
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read project config: %w", err)
@@ -73,7 +66,7 @@ func LoadProjectConfig(dir string) (*ProjectConfig, error) {
 
 // Exists checks if a project configuration exists in the specified directory
 func ProjectConfigExists(dir string) bool {
-	path := filepath.Join(dir, ProjectConfigFile)
+	path := filepath.Join(dir, projectConfigFile)
 	_, err := os.Stat(path)
 	return err == nil
 }

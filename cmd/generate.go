@@ -19,8 +19,6 @@ import (
 	"google.golang.org/genai"
 )
 
-const defaultModel = "gemini-3-pro-image-preview"
-
 type generateOptions struct {
 	prompt     string
 	promptFile string
@@ -68,25 +66,38 @@ When running outside a subproject:
 			return errors.New("prompt is empty. Specify with --prompt or --prompt-file")
 		}
 
-		// Check if we're in a subproject
+		// Must be in a project
 		cwd, err := os.Getwd()
 		if err != nil {
 			return fmt.Errorf("failed to get current directory: %w", err)
 		}
 
-		projectRoot, projectErr := project.FindProjectRoot(cwd)
+		projectRoot, err := project.FindProjectRoot(cwd)
+		if err != nil {
+			if errors.Is(err, project.ErrProjectNotFound) {
+				return errors.New("banago project not found. Run 'banago init' first")
+			}
+			return err
+		}
+
+		// Load project config
+		projectCfg, err := config.LoadProjectConfig(projectRoot)
+		if err != nil {
+			return fmt.Errorf("failed to load project config: %w", err)
+		}
+		model := projectCfg.Model
+
+		// Check if we're in a subproject
 		var subprojectName string
 		var subprojectDir string
 		var subprojectCfg *config.SubprojectConfig
 
-		if projectErr == nil {
-			subprojectName, err = project.FindCurrentSubproject(projectRoot, cwd)
-			if err == nil {
-				subprojectDir = config.GetSubprojectDir(projectRoot, subprojectName)
-				subprojectCfg, err = config.LoadSubprojectConfig(subprojectDir)
-				if err != nil {
-					return fmt.Errorf("failed to load subproject config: %w", err)
-				}
+		subprojectName, err = project.FindCurrentSubproject(projectRoot, cwd)
+		if err == nil {
+			subprojectDir = config.GetSubprojectDir(projectRoot, subprojectName)
+			subprojectCfg, err = config.LoadSubprojectConfig(subprojectDir)
+			if err != nil {
+				return fmt.Errorf("failed to load subproject config: %w", err)
 			}
 		}
 
@@ -145,7 +156,7 @@ When running outside a subproject:
 		}
 
 		contents := []*genai.Content{{Parts: parts}}
-		resp, err := client.Models.GenerateContent(ctx, defaultModel, contents, gcfg)
+		resp, err := client.Models.GenerateContent(ctx, model, contents, gcfg)
 
 		w := cmd.OutOrStdout()
 
@@ -277,6 +288,9 @@ When running outside a subproject:
 				_, _ = fmt.Fprintf(w, "  thoughts: %d\n", usage.ThoughtsTokenCount)
 			}
 		}
+
+		_, _ = fmt.Fprintln(w, "")
+		_, _ = fmt.Fprintf(w, "Model: %s\n", model)
 
 		return nil
 	},

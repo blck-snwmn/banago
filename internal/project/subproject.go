@@ -52,12 +52,10 @@ func CreateSubproject(projectRoot, name, description string) error {
 type SubprojectInfo struct {
 	Name        string
 	Description string
-	CreatedAt   string
-	Path        string
 }
 
-// GetSubprojectInfo returns information about a specific subproject
-func GetSubprojectInfo(projectRoot, name string) (*SubprojectInfo, error) {
+// getSubprojectInfo returns information about a specific subproject
+func getSubprojectInfo(projectRoot, name string) (*SubprojectInfo, error) {
 	subprojectDir := config.GetSubprojectDir(projectRoot, name)
 
 	cfg, err := config.LoadSubprojectConfig(subprojectDir)
@@ -68,21 +66,19 @@ func GetSubprojectInfo(projectRoot, name string) (*SubprojectInfo, error) {
 	return &SubprojectInfo{
 		Name:        cfg.Name,
 		Description: cfg.Description,
-		CreatedAt:   cfg.CreatedAt,
-		Path:        subprojectDir,
 	}, nil
 }
 
 // ListSubprojectInfos returns information about all subprojects
 func ListSubprojectInfos(projectRoot string) ([]*SubprojectInfo, error) {
-	names, err := ListSubprojects(projectRoot)
+	names, err := listSubprojects(projectRoot)
 	if err != nil {
 		return nil, err
 	}
 
 	var infos []*SubprojectInfo
 	for _, name := range names {
-		info, err := GetSubprojectInfo(projectRoot, name)
+		info, err := getSubprojectInfo(projectRoot, name)
 		if err != nil {
 			continue // Skip invalid subprojects
 		}

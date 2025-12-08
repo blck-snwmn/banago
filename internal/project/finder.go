@@ -54,8 +54,8 @@ func FindCurrentSubproject(projectRoot, cwd string) (string, error) {
 	return "", ErrNotInSubproject
 }
 
-// ListSubprojects returns a list of all subproject names in the project
-func ListSubprojects(projectRoot string) ([]string, error) {
+// listSubprojects returns a list of all subproject names in the project
+func listSubprojects(projectRoot string) ([]string, error) {
 	subprojectsDir := filepath.Join(projectRoot, config.SubprojectsDir)
 
 	entries, err := os.ReadDir(subprojectsDir)

@@ -16,7 +16,7 @@ var cfg = struct {
 var rootCmd = &cobra.Command{
 	Use:   "banago",
 	Short: "Gemini ベースの画像生成 CLI",
-	Long:  "プロンプトや手元の画像を指定して Gemini 3 Pro Image Preview (Nano Banana Pro) に画像生成を依頼する CLI",
+	Long:  "プロンプトや手元の画像を指定して Gemini 3 Pro Image Preview に画像生成を依頼する CLI",
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.

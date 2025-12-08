@@ -45,7 +45,7 @@ type TokenUsage struct {
 }
 
 const (
-	MetaFile      = "meta.yaml"
+	metaFile      = "meta.yaml"
 	PromptFile    = "prompt.txt"
 	ContextFile   = "context.md"
 	CharacterFile = "character.md"
@@ -72,7 +72,7 @@ func (e *Entry) Save(historyDir string) error {
 		return fmt.Errorf("failed to marshal entry: %w", err)
 	}
 
-	metaPath := filepath.Join(entryDir, MetaFile)
+	metaPath := filepath.Join(entryDir, metaFile)
 	if err := os.WriteFile(metaPath, data, 0o644); err != nil {
 		return fmt.Errorf("failed to write meta.yaml: %w", err)
 	}
@@ -123,9 +123,9 @@ func (e *Entry) GetEntryDir(historyDir string) string {
 	return filepath.Join(historyDir, e.ID)
 }
 
-// LoadEntry reads an entry from the specified directory
-func LoadEntry(entryDir string) (*Entry, error) {
-	metaPath := filepath.Join(entryDir, MetaFile)
+// loadEntry reads an entry from the specified directory
+func loadEntry(entryDir string) (*Entry, error) {
+	metaPath := filepath.Join(entryDir, metaFile)
 	data, err := os.ReadFile(metaPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read meta.yaml: %w", err)
@@ -170,7 +170,7 @@ func ListEntries(historyDir string) ([]*Entry, error) {
 		}
 
 		entryDir := filepath.Join(historyDir, e.Name())
-		entry, err := LoadEntry(entryDir)
+		entry, err := loadEntry(entryDir)
 		if err != nil {
 			continue // Skip invalid entries
 		}
@@ -200,5 +200,5 @@ func GetLatestEntry(historyDir string) (*Entry, error) {
 // GetEntryByID returns an entry by its ID
 func GetEntryByID(historyDir, id string) (*Entry, error) {
 	entryDir := filepath.Join(historyDir, id)
-	return LoadEntry(entryDir)
+	return loadEntry(entryDir)
 }

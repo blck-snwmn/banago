@@ -57,6 +57,13 @@ Examples:
 			return err
 		}
 
+		// Load project config
+		projectCfg, err := config.LoadProjectConfig(projectRoot)
+		if err != nil {
+			return fmt.Errorf("failed to load project config: %w", err)
+		}
+		model := projectCfg.Model
+
 		subprojectName, err := project.FindCurrentSubproject(projectRoot, cwd)
 		if err != nil {
 			if errors.Is(err, project.ErrNotInSubproject) {
@@ -141,7 +148,7 @@ Examples:
 		}
 
 		contents := []*genai.Content{{Parts: parts}}
-		resp, err := client.Models.GenerateContent(ctx, defaultModel, contents, gcfg)
+		resp, err := client.Models.GenerateContent(ctx, model, contents, gcfg)
 
 		// Save to new history entry
 		entry := history.NewEntry()
@@ -254,6 +261,9 @@ Examples:
 				_, _ = fmt.Fprintf(w, "  thoughts: %d\n", usage.ThoughtsTokenCount)
 			}
 		}
+
+		_, _ = fmt.Fprintln(w, "")
+		_, _ = fmt.Fprintf(w, "Model: %s\n", model)
 
 		return nil
 	},
