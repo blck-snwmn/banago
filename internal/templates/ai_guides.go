@@ -54,8 +54,10 @@ input_images:
 1. Read ` + "`context.md`" + ` and ` + "`characters/<name>.md`" + `
 2. Review reference images in ` + "`inputs/`" + `
 3. Draft a prompt optimized for ` + "`gemini-3-pro-image-preview`" + `:
-   - Use English (better results)
-   - Be specific about costume, pose, expression, background
+   - **Use natural language sentences, NOT tag-based format** (e.g., NOT "1girl, blue hair, standing")
+   - Reference images will be sent with the prompt, so you don't need to describe the character's appearance in detail
+   - Focus on: scene, pose, expression, costume changes, background, lighting
+   - Write in English (better results)
    - Explicitly prohibit text generation in the image
 4. **Show the prompt to the user and get confirmation before generating**
 
@@ -167,8 +169,10 @@ input_images:
 1. Read ` + "`context.md`" + ` and ` + "`characters/<name>.md`" + `
 2. Review reference images in ` + "`inputs/`" + `
 3. Draft a prompt optimized for ` + "`gemini-3-pro-image-preview`" + `:
-   - Use English (better results)
-   - Be specific about costume, pose, expression, background
+   - **Use natural language sentences, NOT tag-based format**
+   - Reference images will be sent with the prompt, so you don't need to describe appearance in detail
+   - Focus on: scene, pose, expression, costume changes, background, lighting
+   - Write in English (better results)
    - Explicitly prohibit text generation in the image
 4. **Show the prompt to the user and get confirmation before generating**
 
@@ -263,8 +267,10 @@ input_images:
 1. Read ` + "`context.md`" + ` and ` + "`characters/<name>.md`" + `
 2. Review reference images in ` + "`inputs/`" + `
 3. Draft a prompt optimized for ` + "`gemini-3-pro-image-preview`" + `:
-   - Use English (better results)
-   - Be specific about costume, pose, expression, background
+   - **Use natural language sentences, NOT tag-based format**
+   - Reference images will be sent with the prompt, so you don't need to describe appearance in detail
+   - Focus on: scene, pose, expression, costume changes, background, lighting
+   - Write in English (better results)
    - Explicitly prohibit text generation in the image
 4. **Show the prompt to the user and get confirmation before generating**
 
