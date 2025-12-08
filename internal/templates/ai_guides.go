@@ -1,8 +1,6 @@
 package templates
 
-const ClaudeMD = `# banago Project - Claude Code Guide
-
-**Model**: ` + "`gemini-3-pro-image-preview`" + ` - Prompts must be optimized for this model.
+const baseGuide = `**Model**: ` + "`gemini-3-pro-image-preview`" + ` - Prompts must be optimized for this model.
 
 ## Quick Start: Image Generation Flow
 
@@ -91,6 +89,8 @@ banago history
 | ` + "`banago history`" + ` | Show generation history |
 | ` + "`banago generate --prompt \"...\"`" + ` | Generate with inline prompt |
 | ` + "`banago generate --prompt-file <path>`" + ` | Generate with prompt file |
+| ` + "`banago regenerate --latest`" + ` | Regenerate with latest history |
+| ` + "`banago regenerate --id <uuid>`" + ` | Regenerate with specific history |
 
 ## Project Structure
 
@@ -104,230 +104,14 @@ banago history
         ├── config.yaml   # Subproject config (character_file, input_images)
         ├── context.md    # Scene/costume details
         ├── inputs/       # Reference images
-        └── history/      # Generation history
-` + "```" + `
-
-## Prompt Guidelines
-
-1. **Language**: English recommended (better results with Gemini)
-2. **Structure**: Role → Constraints → Instructions → Goal
-3. **Detail**: Specific costume, pose, expression, background
-4. **Restrictions**: Explicitly prohibit text generation
-
-## Important Rules
-
-- **Do NOT edit files in** ` + "`history/`" + `: These are archives. Create new prompts instead.
-- **Do NOT modify** ` + "`inputs/`" + ` images: Keep them consistent for reproducibility.
-- To improve results: Reference history, update ` + "`context.md`" + `, create new prompt.
-`
-
-const GeminiMD = `# banago Project - Gemini CLI Guide
-
-Model: ` + "`gemini-3-pro-image-preview`" + `
-
-## Quick Start: Image Generation Flow
-
-### Step 1: Check Current State
-` + "```bash" + `
-banago status
-` + "```" + `
-
-### Step 2: Prepare Subproject
-
-1. **Run** ` + "`banago subproject list`" + ` to check existing subprojects
-2. **If no suitable subproject exists, run** ` + "`banago subproject create <name>`" + ` to create one
-3. **Run** ` + "`cd subprojects/<name>`" + ` to navigate into the subproject
-
-**Do NOT skip this step.**
-
-### Step 3: Setup Subproject
-
-**Important**: Do NOT create or edit files with made-up information. Always ask the user first.
-
-1. **Character file** (if needed):
-   - Ask the user which character to use
-   - Known characters: Research, draft, **confirm with user** before creating
-   - Original characters: Ask user for details
-   - Do NOT assume or guess - always confirm first
-
-2. **Context file**:
-   - **Ask the user** for scene details (costume, pose, background)
-   - Edit ` + "`context.md`" + ` based on user's response
-   - Do NOT assume or guess - always confirm first
-
-3. **config.yaml** - Add or modify fields (do NOT replace entire file):
-` + "```yaml" + `
-character_file: <name>.md
-input_images:
-  - image1.png
-` + "```" + `
-
-4. **Reference images**:
-   - **Ask the user** what reference images to use
-   - Place provided images in ` + "`inputs/`" + `, add to ` + "`config.yaml`" + `
-
-### Step 4: Create Prompt
-
-1. Read ` + "`context.md`" + ` and ` + "`characters/<name>.md`" + `
-2. Review reference images in ` + "`inputs/`" + `
-3. Draft a prompt optimized for ` + "`gemini-3-pro-image-preview`" + `:
-   - **Use natural language sentences, NOT tag-based format**
-   - **Longer, detailed prompts are better** - don't be brief
-   - **Markdown formatting is acceptable**
-   - Reference images will be sent, so no need to describe appearance in detail
-   - Focus on: scene, pose, expression, costume changes, background, lighting
-   - Write in English (better results)
-   - Explicitly prohibit text generation in the image
-4. **Show the prompt to the user and get confirmation before generating**
-
-### Step 5: Generate
-` + "```bash" + `
-banago generate --prompt "Your prompt here"
-` + "```" + `
-
-### Step 6: Iterate
-` + "```bash" + `
-banago history
-` + "```" + `
-1. Review past prompts in ` + "`history/<uuid>/prompt.txt`" + `
-2. Improve the prompt based on results
-3. **Show improved prompt to user and get confirmation**
-4. Generate again with ` + "`banago generate --prompt \"...\"`" + `
-
----
-
-## Command Reference
-
-| Command | Description |
-|---------|-------------|
-| ` + "`banago status`" + ` | Show current state |
-| ` + "`banago subproject list`" + ` | List subprojects |
-| ` + "`banago subproject create <name>`" + ` | Create subproject |
-| ` + "`banago history`" + ` | Show generation history |
-| ` + "`banago generate`" + ` | Generate images |
-
-## History Contents
-
-Each ` + "`history/<uuid>/`" + ` contains:
-- ` + "`prompt.txt`" + `: Prompt used
-- ` + "`context.md`" + `: Context at generation time
-- ` + "`character.md`" + `: Character info (if configured)
-- ` + "`output_*.png`" + `: Generated images
-- ` + "`meta.yaml`" + `: Metadata
-
-## Important Rules
-
-- **Do NOT edit** ` + "`history/`" + ` files: They are archives.
-- **Do NOT modify** ` + "`inputs/`" + ` images.
-- To improve: Reference history, update ` + "`context.md`" + `, create new prompt.
-`
-
-const AgentsMD = `# banago Project - AI Agent Common Guide
-
-## Quick Start: Image Generation Flow
-
-### Step 1: Check Current State
-` + "```bash" + `
-banago status
-` + "```" + `
-Shows whether you are in a subproject and its configuration.
-
-### Step 2: Prepare Subproject
-
-1. **Run** ` + "`banago subproject list`" + ` to check existing subprojects
-2. **If no suitable subproject exists, run** ` + "`banago subproject create <name>`" + ` to create one
-3. **Run** ` + "`cd subprojects/<name>`" + ` to navigate into the subproject
-
-**Do NOT skip this step.** The subproject must exist and you must be inside it before proceeding.
-
-### Step 3: Setup Subproject
-
-**Important**: Do NOT create or edit files with made-up information. Always ask the user first.
-
-1. **Character file** (if needed):
-   - Ask the user which character to use
-   - Known characters: Research, draft, **confirm with user** before creating
-   - Original characters: Ask user for details
-   - Do NOT assume or guess - always confirm first
-
-2. **Context file**:
-   - **Ask the user** for scene details (costume, pose, background)
-   - Edit ` + "`context.md`" + ` based on user's response
-   - Do NOT assume or guess - always confirm first
-
-3. **config.yaml** - Add or modify fields (do NOT replace entire file):
-` + "```yaml" + `
-character_file: <name>.md
-input_images:
-  - image1.png
-` + "```" + `
-
-4. **Reference images**:
-   - **Ask the user** what reference images to use
-   - Place provided images in ` + "`inputs/`" + `, add to ` + "`config.yaml`" + `
-
-### Step 4: Create Prompt
-
-1. Read ` + "`context.md`" + ` and ` + "`characters/<name>.md`" + `
-2. Review reference images in ` + "`inputs/`" + `
-3. Draft a prompt optimized for ` + "`gemini-3-pro-image-preview`" + `:
-   - **Use natural language sentences, NOT tag-based format**
-   - **Longer, detailed prompts are better** - don't be brief
-   - **Markdown formatting is acceptable**
-   - Reference images will be sent, so no need to describe appearance in detail
-   - Focus on: scene, pose, expression, costume changes, background, lighting
-   - Write in English (better results)
-   - Explicitly prohibit text generation in the image
-4. **Show the prompt to the user and get confirmation before generating**
-
-### Step 5: Generate
-` + "```bash" + `
-banago generate --prompt "Your prompt here"
-` + "```" + `
-
-### Step 6: Iterate and Improve
-` + "```bash" + `
-banago history
-` + "```" + `
-1. Review past prompts in ` + "`history/<uuid>/prompt.txt`" + `
-2. Improve the prompt based on results
-3. **Show improved prompt to user and get confirmation**
-4. Generate again with ` + "`banago generate --prompt \"...\"`" + `
-
----
-
-## Project Structure
-
-` + "```" + `
-<project-root>/
-├── banago.yaml           # Project config
-├── CLAUDE.md / GEMINI.md / AGENTS.md
-├── characters/           # Shared character definitions
-│   └── <name>.md
-└── subprojects/
-    └── <name>/
-        ├── config.yaml   # character_file, input_images
-        ├── context.md    # Scene/costume details
-        ├── inputs/       # Reference images
         └── history/      # Generation history (UUID v7)
             └── <uuid>/
-                ├── prompt.txt
-                ├── context.md
-                ├── character.md
-                ├── meta.yaml
-                └── output_*.png
+                ├── prompt.txt    # Prompt used
+                ├── context.md    # Context at generation time
+                ├── character.md  # Character info (if configured)
+                ├── output_*.png  # Generated images
+                └── meta.yaml     # Metadata
 ` + "```" + `
-
-## Command Reference
-
-| Command | Description |
-|---------|-------------|
-| ` + "`banago status`" + ` | Show current state and subproject info |
-| ` + "`banago subproject list`" + ` | List all subprojects |
-| ` + "`banago subproject create <name>`" + ` | Create a new subproject |
-| ` + "`banago history`" + ` | Show generation history |
-| ` + "`banago generate --prompt-file <path>`" + ` | Generate with prompt file |
-| ` + "`banago generate --prompt \"...\"`" + ` | Generate with inline prompt |
 
 ## Important Rules
 
@@ -337,7 +121,7 @@ banago history
 
 - Files in ` + "`history/<uuid>/`" + ` are archives of generation state
 - Editing breaks reproducibility
-- To improve: **reference** history and create **new** prompt file
+- To improve: **reference** history and create **new** prompt
 - To change context: edit ` + "`context.md`" + ` in subproject root (not in history)
 
 ### Other Rules
@@ -345,6 +129,21 @@ banago history
 - Do NOT modify ` + "`inputs/`" + ` images (for consistency)
 - History sorted by UUID v7 (chronological)
 `
+
+// ClaudeMD is the guide for Claude Code
+const ClaudeMD = `# banago Project - Claude Code Guide
+
+` + baseGuide
+
+// GeminiMD is the guide for Gemini CLI
+const GeminiMD = `# banago Project - Gemini CLI Guide
+
+` + baseGuide
+
+// AgentsMD is the common guide for AI agents
+const AgentsMD = `# banago Project - AI Agent Guide
+
+` + baseGuide
 
 const DefaultContextMD = `# Context Information
 
