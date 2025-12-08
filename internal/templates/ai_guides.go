@@ -55,6 +55,8 @@ input_images:
 2. Review reference images in ` + "`inputs/`" + `
 3. Draft a prompt optimized for ` + "`gemini-3-pro-image-preview`" + `:
    - **Use natural language sentences, NOT tag-based format** (e.g., NOT "1girl, blue hair, standing")
+   - **Longer, detailed prompts are better** - don't be brief
+   - **Markdown formatting is acceptable** (headers, lists, etc.)
    - Reference images will be sent with the prompt, so you don't need to describe the character's appearance in detail
    - Focus on: scene, pose, expression, costume changes, background, lighting
    - Write in English (better results)
@@ -170,7 +172,9 @@ input_images:
 2. Review reference images in ` + "`inputs/`" + `
 3. Draft a prompt optimized for ` + "`gemini-3-pro-image-preview`" + `:
    - **Use natural language sentences, NOT tag-based format**
-   - Reference images will be sent with the prompt, so you don't need to describe appearance in detail
+   - **Longer, detailed prompts are better** - don't be brief
+   - **Markdown formatting is acceptable**
+   - Reference images will be sent, so no need to describe appearance in detail
    - Focus on: scene, pose, expression, costume changes, background, lighting
    - Write in English (better results)
    - Explicitly prohibit text generation in the image
@@ -268,7 +272,9 @@ input_images:
 2. Review reference images in ` + "`inputs/`" + `
 3. Draft a prompt optimized for ` + "`gemini-3-pro-image-preview`" + `:
    - **Use natural language sentences, NOT tag-based format**
-   - Reference images will be sent with the prompt, so you don't need to describe appearance in detail
+   - **Longer, detailed prompts are better** - don't be brief
+   - **Markdown formatting is acceptable**
+   - Reference images will be sent, so no need to describe appearance in detail
    - Focus on: scene, pose, expression, costume changes, background, lighting
    - Write in English (better results)
    - Explicitly prohibit text generation in the image
