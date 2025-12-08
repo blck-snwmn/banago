@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.ProjectName}} - banago</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #1a1a2e;
+            color: #eee;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            color: #fff;
+        }
+        .subtitle {
+            color: #888;
+            margin-bottom: 2rem;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+        .card {
+            background: #16213e;
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+        .card h2 {
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+            color: #fff;
+        }
+        .card p {
+            color: #aaa;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+        .badge {
+            display: inline-block;
+            background: #0f3460;
+            color: #7ec8e3;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+        .empty {
+            text-align: center;
+            padding: 4rem;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>{{if .ProjectName}}{{.ProjectName}}{{else}}banago{{end}}</h1>
+        <p class="subtitle">Subprojects</p>
+
+        {{if .Subprojects}}
+        <div class="grid">
+            {{range .Subprojects}}
+            <a href="/subprojects/{{.Name}}" class="card">
+                <h2>{{.Name}}</h2>
+                {{if .Description}}<p>{{.Description}}</p>{{end}}
+                <span class="badge">{{.EntryCount}} entries</span>
+            </a>
+            {{end}}
+        </div>
+        {{else}}
+        <div class="empty">
+            <p>No subprojects found.</p>
+            <p>Create one with: banago subproject create &lt;name&gt;</p>
+        </div>
+        {{end}}
+    </div>
+</body>
+</html>

@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Entry.ID}} - banago</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #1a1a2e;
+            color: #eee;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .breadcrumb {
+            margin-bottom: 1rem;
+        }
+        .breadcrumb a {
+            color: #7ec8e3;
+            text-decoration: none;
+        }
+        .breadcrumb a:hover {
+            text-decoration: underline;
+        }
+        h1 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: #fff;
+            font-family: monospace;
+            word-break: break-all;
+        }
+        .meta {
+            color: #888;
+            margin-bottom: 2rem;
+            font-size: 0.9rem;
+        }
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 2rem;
+        }
+        @media (max-width: 900px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+        }
+        .images {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
+            gap: 1rem;
+        }
+        @media (max-width: 600px) {
+            .images {
+                grid-template-columns: 1fr;
+            }
+        }
+        .image-card {
+            background: #16213e;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .image-card img {
+            width: 100%;
+            max-height: 80vh;
+            object-fit: contain;
+            display: block;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .image-card img:hover {
+            opacity: 0.9;
+        }
+        .sidebar {
+            background: #16213e;
+            border-radius: 12px;
+            padding: 1.5rem;
+            height: fit-content;
+            position: sticky;
+            top: 2rem;
+        }
+        .sidebar h2 {
+            font-size: 1rem;
+            margin-bottom: 1rem;
+            color: #7ec8e3;
+        }
+        .prompt {
+            background: #0f3460;
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: monospace;
+            font-size: 0.85rem;
+            white-space: pre-wrap;
+            word-break: break-word;
+            max-height: 400px;
+            overflow-y: auto;
+            line-height: 1.5;
+        }
+        .token-info {
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid #0f3460;
+        }
+        .token-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            padding: 0.25rem 0;
+        }
+        .token-label {
+            color: #888;
+        }
+        .token-value {
+            color: #fff;
+            font-family: monospace;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 1000;
+            cursor: pointer;
+        }
+        .modal img {
+            max-width: 95%;
+            max-height: 95%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        .modal.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="breadcrumb">
+            <a href="/">Home</a> / <a href="/subprojects/{{.SubprojectName}}">{{.SubprojectName}}</a> / Entry
+        </div>
+        <h1>{{.Entry.ID}}</h1>
+        <div class="meta">{{.Entry.CreatedAt}}</div>
+
+        <div class="content">
+            <div class="images">
+                {{range .ImageURLs}}
+                <div class="image-card">
+                    <img src="{{.}}" alt="Generated image" onclick="openModal(this.src)">
+                </div>
+                {{else}}
+                <p style="color: #666;">No images generated.</p>
+                {{end}}
+            </div>
+
+            <div class="sidebar">
+                <h2>Prompt</h2>
+                <div class="prompt">{{if .Prompt}}{{.Prompt}}{{else}}(No prompt saved){{end}}</div>
+
+                {{if .Entry.Result.TokenUsage.Total}}
+                <div class="token-info">
+                    <h2>Token Usage</h2>
+                    <div class="token-row">
+                        <span class="token-label">Prompt</span>
+                        <span class="token-value">{{.Entry.Result.TokenUsage.Prompt}}</span>
+                    </div>
+                    <div class="token-row">
+                        <span class="token-label">Candidates</span>
+                        <span class="token-value">{{.Entry.Result.TokenUsage.Candidates}}</span>
+                    </div>
+                    <div class="token-row">
+                        <span class="token-label">Total</span>
+                        <span class="token-value">{{.Entry.Result.TokenUsage.Total}}</span>
+                    </div>
+                    {{if .Entry.Result.TokenUsage.Cached}}
+                    <div class="token-row">
+                        <span class="token-label">Cached</span>
+                        <span class="token-value">{{.Entry.Result.TokenUsage.Cached}}</span>
+                    </div>
+                    {{end}}
+                </div>
+                {{end}}
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="modal" onclick="closeModal()">
+        <img id="modal-img" src="" alt="Full size image">
+    </div>
+
+    <script>
+        function openModal(src) {
+            document.getElementById('modal-img').src = src;
+            document.getElementById('modal').classList.add('active');
+        }
+        function closeModal() {
+            document.getElementById('modal').classList.remove('active');
+        }
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeModal();
+        });
+    </script>
+</body>
+</html>

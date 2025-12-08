@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Name}} - banago</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #1a1a2e;
+            color: #eee;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .breadcrumb {
+            margin-bottom: 1rem;
+        }
+        .breadcrumb a {
+            color: #7ec8e3;
+            text-decoration: none;
+        }
+        .breadcrumb a:hover {
+            text-decoration: underline;
+        }
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            color: #fff;
+        }
+        .description {
+            color: #888;
+            margin-bottom: 2rem;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+        .card {
+            background: #16213e;
+            border-radius: 12px;
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+        .card-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            background: #0f3460;
+        }
+        .card-body {
+            padding: 1rem;
+        }
+        .card-date {
+            font-size: 0.85rem;
+            color: #888;
+            margin-bottom: 0.5rem;
+        }
+        .card-id {
+            font-family: monospace;
+            font-size: 0.75rem;
+            color: #666;
+            word-break: break-all;
+        }
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            margin-right: 0.5rem;
+        }
+        .badge-success {
+            background: #1b4332;
+            color: #95d5b2;
+        }
+        .badge-error {
+            background: #4a1515;
+            color: #f8b4b4;
+        }
+        .empty {
+            text-align: center;
+            padding: 4rem;
+            color: #666;
+        }
+        .no-image {
+            width: 100%;
+            height: 200px;
+            background: #0f3460;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #444;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="breadcrumb">
+            <a href="/">Home</a> / {{.Name}}
+        </div>
+        <h1>{{.Name}}</h1>
+        {{if .Description}}<p class="description">{{.Description}}</p>{{end}}
+
+        {{if .Entries}}
+        <div class="grid">
+            {{range .Entries}}
+            <a href="/entry/{{$.Name}}/{{.ID}}" class="card">
+                {{if and .Success (gt .ImageCount 0)}}
+                <img class="card-image" src="/images/{{$.Name}}/{{.ID}}/{{index .OutputImages 0}}" alt="Generated image">
+                {{else}}
+                <div class="no-image">No image</div>
+                {{end}}
+                <div class="card-body">
+                    <div class="card-date">
+                        {{if .Success}}
+                        <span class="badge badge-success">{{.ImageCount}} images</span>
+                        {{else}}
+                        <span class="badge badge-error">Failed</span>
+                        {{end}}
+                        {{.CreatedAt}}
+                    </div>
+                    <div class="card-id">{{.ID}}</div>
+                </div>
+            </a>
+            {{end}}
+        </div>
+        {{else}}
+        <div class="empty">
+            <p>No history entries found.</p>
+            <p>Generate images with: banago generate --prompt "..."</p>
+        </div>
+        {{end}}
+    </div>
+</body>
+</html>
