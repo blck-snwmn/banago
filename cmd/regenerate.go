@@ -6,13 +6,11 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/blck-snwmn/banago/internal/config"
 	"github.com/blck-snwmn/banago/internal/history"
 	"github.com/blck-snwmn/banago/internal/project"
 	"github.com/spf13/cobra"
-	"google.golang.org/genai"
 )
 
 type regenerateOptions struct {
@@ -122,33 +120,15 @@ Examples:
 
 		// Generate images
 		ctx := context.Background()
-		client, err := genai.NewClient(ctx, &genai.ClientConfig{APIKey: cfg.apiKey, Backend: genai.BackendGeminiAPI})
-		if err != nil {
-			return fmt.Errorf("failed to initialize client: %w", err)
-		}
-
-		parts := []*genai.Part{genai.NewPartFromText(promptText)}
-		for _, imgPath := range imagePaths {
-			part, err := imagePartFromFile(imgPath)
-			if err != nil {
-				return err
-			}
-			parts = append(parts, part)
-		}
-
-		gcfg := &genai.GenerateContentConfig{ResponseModalities: []string{"IMAGE"}}
-		if aspect != "" || size != "" {
-			gcfg.ImageConfig = &genai.ImageConfig{}
-			if aspect != "" {
-				gcfg.ImageConfig.AspectRatio = aspect
-			}
-			if size != "" {
-				gcfg.ImageConfig.ImageSize = strings.ToUpper(size)
-			}
-		}
-
-		contents := []*genai.Content{{Parts: parts}}
-		resp, err := client.Models.GenerateContent(ctx, model, contents, gcfg)
+		result := generateImages(ctx, cfg.apiKey, generationParams{
+			Model:       model,
+			Prompt:      promptText,
+			ImagePaths:  imagePaths,
+			AspectRatio: aspect,
+			ImageSize:   size,
+		})
+		resp := result.Response
+		err = result.Error
 
 		// Save to new history entry
 		entry := history.NewEntry()
@@ -219,15 +199,7 @@ Examples:
 		for _, s := range saved {
 			entry.Result.OutputImages = append(entry.Result.OutputImages, filepath.Base(s))
 		}
-		if resp.UsageMetadata != nil {
-			entry.Result.TokenUsage = history.TokenUsage{
-				Prompt:     int(resp.UsageMetadata.PromptTokenCount),
-				Candidates: int(resp.UsageMetadata.CandidatesTokenCount),
-				Total:      int(resp.UsageMetadata.TotalTokenCount),
-				Cached:     int(resp.UsageMetadata.CachedContentTokenCount),
-				Thoughts:   int(resp.UsageMetadata.ThoughtsTokenCount),
-			}
-		}
+		entry.Result.TokenUsage = result.TokenUsage
 
 		if err := entry.Save(historyDir); err != nil {
 			_, _ = fmt.Fprintf(w, "Warning: failed to save history: %v\n", err)
@@ -241,29 +213,7 @@ Examples:
 			_, _ = fmt.Fprintf(w, "  %s\n", filepath.Base(s))
 		}
 
-		if text := strings.TrimSpace(resp.Text()); text != "" {
-			_, _ = fmt.Fprintln(w, "")
-			_, _ = fmt.Fprintln(w, "Text response:")
-			_, _ = fmt.Fprintln(w, text)
-		}
-
-		if resp.UsageMetadata != nil {
-			usage := resp.UsageMetadata
-			_, _ = fmt.Fprintln(w, "")
-			_, _ = fmt.Fprintln(w, "Token usage:")
-			_, _ = fmt.Fprintf(w, "  prompt: %d\n", usage.PromptTokenCount)
-			_, _ = fmt.Fprintf(w, "  candidates: %d\n", usage.CandidatesTokenCount)
-			_, _ = fmt.Fprintf(w, "  total: %d\n", usage.TotalTokenCount)
-			if usage.CachedContentTokenCount > 0 {
-				_, _ = fmt.Fprintf(w, "  cached: %d\n", usage.CachedContentTokenCount)
-			}
-			if usage.ThoughtsTokenCount > 0 {
-				_, _ = fmt.Fprintf(w, "  thoughts: %d\n", usage.ThoughtsTokenCount)
-			}
-		}
-
-		_, _ = fmt.Fprintln(w, "")
-		_, _ = fmt.Fprintf(w, "Model: %s\n", model)
+		printGenerationOutput(w, resp, model)
 
 		return nil
 	},
