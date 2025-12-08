@@ -32,10 +32,12 @@ This shows whether you are in a subproject and its configuration.
 
 2. **Context file**:
    - **Ask the user**: "What scene do you want to generate? Please describe costume, pose, expression, background, and any specific requirements."
-   - Edit ` + "`context.md`" + ` based on user's response
+   - **Read the existing file first**, then edit based on user's response
    - Do NOT assume or guess - always confirm with user before editing
 
-3. **config.yaml** - Add or modify these fields (do NOT replace the entire file):
+3. **config.yaml**:
+   - **Read the existing file first** to understand current settings
+   - Add or modify these fields (do NOT replace the entire file):
 ` + "```yaml" + `
 character_file: <name>.md
 input_images:
