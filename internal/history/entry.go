@@ -60,6 +60,16 @@ func NewEntry() *Entry {
 	}
 }
 
+// NewEntryFromSource creates a new entry copying Generation metadata from source
+func NewEntryFromSource(source *Entry) *Entry {
+	entry := NewEntry()
+	entry.Generation.PromptFile = source.Generation.PromptFile
+	entry.Generation.InputImages = append([]string{}, source.Generation.InputImages...)
+	entry.Generation.ContextFile = source.Generation.ContextFile
+	entry.Generation.CharacterFile = source.Generation.CharacterFile
+	return entry
+}
+
 // Save writes the entry to the history directory
 func (e *Entry) Save(historyDir string) error {
 	entryDir := filepath.Join(historyDir, e.ID)

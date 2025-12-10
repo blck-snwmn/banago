@@ -131,9 +131,7 @@ Examples:
 		err = result.Error
 
 		// Save to new history entry
-		entry := history.NewEntry()
-		entry.Generation.PromptFile = history.PromptFile
-		entry.Generation.InputImages = append(entry.Generation.InputImages, sourceEntry.Generation.InputImages...)
+		entry := history.NewEntryFromSource(sourceEntry)
 
 		entryDir := entry.GetEntryDir(historyDir)
 
@@ -148,29 +146,13 @@ Examples:
 		// Copy context file from source if exists
 		if sourceEntry.Generation.ContextFile != "" {
 			srcContextPath := filepath.Join(sourceEntryDir, history.ContextFile)
-			if _, statErr := os.Stat(srcContextPath); statErr == nil {
-				data, readErr := os.ReadFile(srcContextPath)
-				if readErr == nil {
-					dstContextPath := filepath.Join(entryDir, history.ContextFile)
-					if writeErr := os.WriteFile(dstContextPath, data, 0o644); writeErr == nil {
-						entry.Generation.ContextFile = history.ContextFile
-					}
-				}
-			}
+			_ = entry.SaveContextFile(historyDir, srcContextPath)
 		}
 
 		// Copy character file from source if exists
 		if sourceEntry.Generation.CharacterFile != "" {
 			srcCharPath := filepath.Join(sourceEntryDir, history.CharacterFile)
-			if _, statErr := os.Stat(srcCharPath); statErr == nil {
-				data, readErr := os.ReadFile(srcCharPath)
-				if readErr == nil {
-					dstCharPath := filepath.Join(entryDir, history.CharacterFile)
-					if writeErr := os.WriteFile(dstCharPath, data, 0o644); writeErr == nil {
-						entry.Generation.CharacterFile = history.CharacterFile
-					}
-				}
-			}
+			_ = entry.SaveCharacterFile(historyDir, srcCharPath)
 		}
 
 		if err != nil {
