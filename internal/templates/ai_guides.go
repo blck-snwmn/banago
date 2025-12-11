@@ -164,24 +164,3 @@ Add subproject-specific information here.
 (Add specific points to note here)
 `
 
-const DefaultCharacterMD = `# Character Information
-
-Add character base information here.
-
-## Basic Profile
-
-- Name:
-- Gender:
-- Age:
-
-## Appearance
-
-- Hair color/style:
-- Eye color:
-- Body type:
-- Distinctive features:
-
-## Personality/Setting
-
-(Describe character personality and background here)
-`

@@ -15,8 +15,8 @@ var cfg = struct {
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "banago",
-	Short: "Gemini ベースの画像生成 CLI",
-	Long:  "プロンプトや手元の画像を指定して Gemini 3 Pro Image Preview に画像生成を依頼する CLI",
+	Short: "Image generation CLI powered by Gemini",
+	Long:  "CLI tool to generate images using Gemini 3 Pro Image Preview with prompts and reference images",
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -29,7 +29,7 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.PersistentFlags().StringVar(&cfg.apiKey, "api-key", "", "Gemini API キー。未指定なら環境変数 GEMINI_API_KEY を利用")
+	rootCmd.PersistentFlags().StringVar(&cfg.apiKey, "api-key", "", "Gemini API key (defaults to GEMINI_API_KEY env var)")
 }
 
 // requireAPIKey checks if the API key is set and returns an error if not.
@@ -39,7 +39,7 @@ func requireAPIKey() error {
 		cfg.apiKey = strings.TrimSpace(os.Getenv("GEMINI_API_KEY"))
 	}
 	if cfg.apiKey == "" {
-		return errors.New("API キーがありません。--api-key か環境変数 GEMINI_API_KEY を設定してください")
+		return errors.New("API key is required. Set --api-key or GEMINI_API_KEY environment variable")
 	}
 	return nil
 }

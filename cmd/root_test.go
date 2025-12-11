@@ -89,7 +89,7 @@ func TestGenerateCommandRequiresAPIKey(t *testing.T) {
 	}
 
 	// Verify the error message mentions API key
-	if !strings.Contains(string(output), "API キー") {
+	if !strings.Contains(string(output), "API key") {
 		t.Errorf("expected error message about API key, got: %s", output)
 	}
 }
