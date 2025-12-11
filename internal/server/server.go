@@ -215,27 +215,12 @@ func (s *Server) handleImage(w http.ResponseWriter, r *http.Request) {
 	// /images/{subproject}/{entryID}/{filename}
 	path := r.URL.Path[len("/images/"):]
 
-	var subproject, entryID, filename string
-	slashCount := 0
-	lastIdx := 0
-	for i, c := range path {
-		if c == '/' {
-			slashCount++
-			switch slashCount {
-			case 1:
-				subproject = path[:i]
-				lastIdx = i + 1
-			case 2:
-				entryID = path[lastIdx:i]
-				filename = path[i+1:]
-			}
-		}
-	}
-
-	if subproject == "" || entryID == "" || filename == "" {
+	parts := strings.SplitN(path, "/", 3)
+	if len(parts) != 3 || parts[0] == "" || parts[1] == "" || parts[2] == "" {
 		http.NotFound(w, r)
 		return
 	}
+	subproject, entryID, filename := parts[0], parts[1], parts[2]
 
 	subprojectDir := config.GetSubprojectDir(s.projectRoot, subproject)
 	historyDir := config.GetHistoryDir(subprojectDir)
