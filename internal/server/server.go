@@ -252,7 +252,7 @@ func (s *Server) handleImage(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	if len(absImagePath) < len(absHistoryDir) || absImagePath[:len(absHistoryDir)] != absHistoryDir {
+	if !strings.HasPrefix(absImagePath, absHistoryDir+string(filepath.Separator)) {
 		http.NotFound(w, r)
 		return
 	}
