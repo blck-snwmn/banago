@@ -12,6 +12,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const (
+	uuidShortLen = 8  // Length for shortened UUID display (e.g., "01234567...")
+	datePrefixLen = 10 // Length for date prefix from RFC3339 (YYYY-MM-DD)
+)
+
 var statusCmd = &cobra.Command{
 	Use:   "status",
 	Short: "Show current subproject status",
@@ -118,7 +123,7 @@ var statusCmd = &cobra.Command{
 			_, _ = fmt.Fprintf(w, "History: %d entries\n", len(entries))
 			// Show latest entry
 			latest := entries[len(entries)-1]
-			_, _ = fmt.Fprintf(w, "  Latest: %s (%s)\n", latest.ID[:8]+"...", latest.CreatedAt[:10])
+			_, _ = fmt.Fprintf(w, "  Latest: %s (%s)\n", latest.ID[:uuidShortLen]+"...", latest.CreatedAt[:datePrefixLen])
 		}
 
 		return nil
