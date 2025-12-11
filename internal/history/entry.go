@@ -133,6 +133,12 @@ func (e *Entry) GetEntryDir(historyDir string) string {
 	return filepath.Join(historyDir, e.ID)
 }
 
+// Cleanup removes the entry directory (use on generation failure)
+func (e *Entry) Cleanup(historyDir string) error {
+	entryDir := e.GetEntryDir(historyDir)
+	return os.RemoveAll(entryDir)
+}
+
 // loadEntry reads an entry from the specified directory
 func loadEntry(entryDir string) (*Entry, error) {
 	metaPath := filepath.Join(entryDir, metaFile)

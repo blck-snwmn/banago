@@ -187,11 +187,9 @@ When running outside a subproject:
 			}
 
 			if err != nil {
-				// Save failed entry
-				entry.Result.Success = false
-				entry.Result.ErrorMessage = err.Error()
-				if saveErr := entry.Save(historyDir); saveErr != nil {
-					_, _ = fmt.Fprintf(w, "Warning: failed to save history: %v\n", saveErr)
+				// Clean up history directory on generation failure
+				if err := entry.Cleanup(historyDir); err != nil {
+					_, _ = fmt.Fprintf(w, "Warning: failed to clean up history directory: %v\n", err)
 				}
 				return fmt.Errorf("failed to generate image: %w", err)
 			}
@@ -199,10 +197,9 @@ When running outside a subproject:
 			// Save generated images
 			saved, saveErr := saveInlineImages(resp, entryDir, "output")
 			if saveErr != nil {
-				entry.Result.Success = false
-				entry.Result.ErrorMessage = saveErr.Error()
-				if err := entry.Save(historyDir); err != nil {
-					_, _ = fmt.Fprintf(w, "Warning: failed to save history: %v\n", err)
+				// Clean up history directory on save failure
+				if err := entry.Cleanup(historyDir); err != nil {
+					_, _ = fmt.Fprintf(w, "Warning: failed to clean up history directory: %v\n", err)
 				}
 				return saveErr
 			}
