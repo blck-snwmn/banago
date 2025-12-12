@@ -29,6 +29,57 @@ type generateOptions struct {
 	size       string
 }
 
+// resolvePrompt returns the prompt text from either inline prompt or file.
+func resolvePrompt(prompt, promptFile string) (string, error) {
+	if prompt != "" {
+		text := strings.TrimSpace(prompt)
+		if text == "" {
+			return "", errors.New("prompt is empty. Specify with --prompt or --prompt-file")
+		}
+		return text, nil
+	}
+	if promptFile != "" {
+		data, err := os.ReadFile(promptFile)
+		if err != nil {
+			return "", fmt.Errorf("failed to read prompt file: %w", err)
+		}
+		text := strings.TrimSpace(string(data))
+		if text == "" {
+			return "", errors.New("prompt is empty. Specify with --prompt or --prompt-file")
+		}
+		return text, nil
+	}
+	return "", errors.New("prompt is empty. Specify with --prompt or --prompt-file")
+}
+
+// collectImagePaths gathers image paths from subproject config and command flags.
+func collectImagePaths(subprojectDir string, subprojectCfg *config.SubprojectConfig, additionalImages []string) []string {
+	var imagePaths []string
+	if subprojectCfg != nil && len(subprojectCfg.InputImages) > 0 {
+		inputsDir := config.GetInputsDir(subprojectDir)
+		for _, img := range subprojectCfg.InputImages {
+			imagePaths = append(imagePaths, filepath.Join(inputsDir, img))
+		}
+	}
+	imagePaths = append(imagePaths, additionalImages...)
+	return imagePaths
+}
+
+// resolveGenerationParams determines aspect ratio and size from flags and config.
+func resolveGenerationParams(flagAspect, flagSize string, subprojectCfg *config.SubprojectConfig) (aspect, size string) {
+	aspect = flagAspect
+	size = flagSize
+	if subprojectCfg != nil {
+		if aspect == "" && subprojectCfg.AspectRatio != "" {
+			aspect = subprojectCfg.AspectRatio
+		}
+		if size == "" && subprojectCfg.ImageSize != "" {
+			size = subprojectCfg.ImageSize
+		}
+	}
+	return aspect, size
+}
+
 var genOpts generateOptions
 
 var generateCmd = &cobra.Command{
@@ -51,19 +102,9 @@ When running outside a subproject:
 		}
 
 		// Get prompt
-		var promptText string
-		if genOpts.prompt != "" {
-			promptText = strings.TrimSpace(genOpts.prompt)
-		}
-		if genOpts.promptFile != "" {
-			data, err := os.ReadFile(genOpts.promptFile)
-			if err != nil {
-				return fmt.Errorf("failed to read prompt file: %w", err)
-			}
-			promptText = strings.TrimSpace(string(data))
-		}
-		if promptText == "" {
-			return errors.New("prompt is empty. Specify with --prompt or --prompt-file")
+		promptText, err := resolvePrompt(genOpts.prompt, genOpts.promptFile)
+		if err != nil {
+			return err
 		}
 
 		// Must be in a project
@@ -88,11 +129,10 @@ When running outside a subproject:
 		model := projectCfg.Model
 
 		// Check if we're in a subproject
-		var subprojectName string
 		var subprojectDir string
 		var subprojectCfg *config.SubprojectConfig
 
-		subprojectName, err = project.FindCurrentSubproject(projectRoot, cwd)
+		subprojectName, err := project.FindCurrentSubproject(projectRoot, cwd)
 		if err == nil {
 			subprojectDir = config.GetSubprojectDir(projectRoot, subprojectName)
 			subprojectCfg, err = config.LoadSubprojectConfig(subprojectDir)
@@ -102,31 +142,13 @@ When running outside a subproject:
 		}
 
 		// Collect image paths
-		var imagePaths []string
-		if subprojectCfg != nil && len(subprojectCfg.InputImages) > 0 {
-			inputsDir := config.GetInputsDir(subprojectDir)
-			for _, img := range subprojectCfg.InputImages {
-				imagePaths = append(imagePaths, filepath.Join(inputsDir, img))
-			}
-		}
-		// Add any additional images from --image flag
-		imagePaths = append(imagePaths, genOpts.images...)
-
+		imagePaths := collectImagePaths(subprojectDir, subprojectCfg, genOpts.images)
 		if len(imagePaths) == 0 {
 			return errors.New("no images specified. Use --image or set input_images in subproject config.yaml")
 		}
 
 		// Determine aspect ratio and size
-		aspect := genOpts.aspect
-		size := genOpts.size
-		if subprojectCfg != nil {
-			if aspect == "" && subprojectCfg.AspectRatio != "" {
-				aspect = subprojectCfg.AspectRatio
-			}
-			if size == "" && subprojectCfg.ImageSize != "" {
-				size = subprojectCfg.ImageSize
-			}
-		}
+		aspect, size := resolveGenerationParams(genOpts.aspect, genOpts.size, subprojectCfg)
 
 		// Generate images
 		ctx := context.Background()
