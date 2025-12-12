@@ -31,6 +31,38 @@
         .breadcrumb a:hover {
             text-decoration: underline;
         }
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        .nav-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: #16213e;
+            color: #7ec8e3;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            transition: background 0.2s;
+        }
+        .nav-btn:hover {
+            background: #1a2a4a;
+        }
+        .nav-btn.disabled {
+            opacity: 0.3;
+            pointer-events: none;
+        }
+        .nav-btn kbd {
+            background: #0f3460;
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-size: 0.75rem;
+            font-family: monospace;
+        }
         h1 {
             font-size: 1.5rem;
             margin-bottom: 0.5rem;
@@ -154,6 +186,17 @@
         <h1>{{.Entry.ID}}</h1>
         <div class="meta">{{.Entry.CreatedAt}}</div>
 
+        <div class="nav-container">
+            <a href="{{if .PrevEntryID}}/entry/{{.SubprojectName}}/{{.PrevEntryID}}{{else}}#{{end}}"
+               class="nav-btn{{if not .PrevEntryID}} disabled{{end}}" id="prev-btn">
+                <span>&larr;</span> Newer <kbd>&larr;</kbd>
+            </a>
+            <a href="{{if .NextEntryID}}/entry/{{.SubprojectName}}/{{.NextEntryID}}{{else}}#{{end}}"
+               class="nav-btn{{if not .NextEntryID}} disabled{{end}}" id="next-btn">
+                Older <kbd>&rarr;</kbd> <span>&rarr;</span>
+            </a>
+        </div>
+
         <div class="content">
             <div class="images">
                 {{range .ImageURLs}}
@@ -210,6 +253,20 @@
         }
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') closeModal();
+            // Navigation shortcuts (only when modal is not open)
+            if (!document.getElementById('modal').classList.contains('active')) {
+                if (e.key === 'ArrowLeft') {
+                    const prevBtn = document.getElementById('prev-btn');
+                    if (prevBtn && !prevBtn.classList.contains('disabled')) {
+                        window.location.href = prevBtn.href;
+                    }
+                } else if (e.key === 'ArrowRight') {
+                    const nextBtn = document.getElementById('next-btn');
+                    if (nextBtn && !nextBtn.classList.contains('disabled')) {
+                        window.location.href = nextBtn.href;
+                    }
+                }
+            }
         });
     </script>
 </body>

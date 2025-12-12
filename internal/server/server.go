@@ -193,21 +193,56 @@ func (s *Server) renderEntry(w http.ResponseWriter, subprojectName, entryID stri
 		imageURLs = append(imageURLs, fmt.Sprintf("/images/%s/%s/%s", subprojectName, entryID, img))
 	}
 
+	// Get prev/next entry IDs for navigation
+	prevID, nextID := s.getAdjacentEntryIDs(historyDir, entryID)
+
 	data := struct {
 		SubprojectName string
 		Entry          *history.Entry
 		Prompt         string
 		ImageURLs      []string
+		PrevEntryID    string
+		NextEntryID    string
 	}{
 		SubprojectName: subprojectName,
 		Entry:          entry,
 		Prompt:         prompt,
 		ImageURLs:      imageURLs,
+		PrevEntryID:    prevID,
+		NextEntryID:    nextID,
 	}
 
 	if err := s.templates.ExecuteTemplate(w, "entry.html", data); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
+}
+
+// getAdjacentEntryIDs returns the previous and next entry IDs for navigation
+// Entries are sorted newest first, so "prev" is newer and "next" is older
+func (s *Server) getAdjacentEntryIDs(historyDir, currentID string) (prevID, nextID string) {
+	entries, err := history.ListEntries(historyDir)
+	if err != nil || len(entries) == 0 {
+		return "", ""
+	}
+
+	// Reverse to newest first (same as subproject page order)
+	sort.Slice(entries, func(i, j int) bool {
+		return entries[i].ID > entries[j].ID
+	})
+
+	for i, e := range entries {
+		if e.ID == currentID {
+			if i > 0 {
+				prevID = entries[i-1].ID
+			}
+			if i < len(entries)-1 {
+				nextID = entries[i+1].ID
+			}
+			break
+		}
+	}
+
+	return prevID, nextID
 }
 
 // handleImage serves image files from history
