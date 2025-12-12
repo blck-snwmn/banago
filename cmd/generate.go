@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -23,8 +22,6 @@ type generateOptions struct {
 	prompt     string
 	promptFile string
 	images     []string
-	outputDir  string
-	prefix     string
 	aspect     string
 	size       string
 }
@@ -55,7 +52,7 @@ func resolvePrompt(prompt, promptFile string) (string, error) {
 // collectImagePaths gathers image paths from subproject config and command flags.
 func collectImagePaths(subprojectDir string, subprojectCfg *config.SubprojectConfig, additionalImages []string) []string {
 	var imagePaths []string
-	if subprojectCfg != nil && len(subprojectCfg.InputImages) > 0 {
+	if len(subprojectCfg.InputImages) > 0 {
 		inputsDir := config.GetInputsDir(subprojectDir)
 		for _, img := range subprojectCfg.InputImages {
 			imagePaths = append(imagePaths, filepath.Join(inputsDir, img))
@@ -69,13 +66,11 @@ func collectImagePaths(subprojectDir string, subprojectCfg *config.SubprojectCon
 func resolveGenerationParams(flagAspect, flagSize string, subprojectCfg *config.SubprojectConfig) (aspect, size string) {
 	aspect = flagAspect
 	size = flagSize
-	if subprojectCfg != nil {
-		if aspect == "" && subprojectCfg.AspectRatio != "" {
-			aspect = subprojectCfg.AspectRatio
-		}
-		if size == "" && subprojectCfg.ImageSize != "" {
-			size = subprojectCfg.ImageSize
-		}
+	if aspect == "" && subprojectCfg.AspectRatio != "" {
+		aspect = subprojectCfg.AspectRatio
+	}
+	if size == "" && subprojectCfg.ImageSize != "" {
+		size = subprojectCfg.ImageSize
 	}
 	return aspect, size
 }
@@ -87,14 +82,10 @@ var generateCmd = &cobra.Command{
 	Short: "Generate images",
 	Long: `Generate images using the Gemini API.
 
-When running inside a subproject:
+Must be run inside a subproject directory:
   - input_images from config.yaml are automatically used
   - Results are saved to history/
-  - Additional images can be specified with --image
-
-When running outside a subproject:
-  - Images must be specified with --image
-  - Results are saved to --output-dir`,
+  - Additional images can be specified with --image`,
 	Args: cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, _ []string) error {
 		if err := requireAPIKey(); err != nil {
@@ -128,17 +119,19 @@ When running outside a subproject:
 		}
 		model := projectCfg.Model
 
-		// Check if we're in a subproject
-		var subprojectDir string
-		var subprojectCfg *config.SubprojectConfig
-
+		// Must be in a subproject
 		subprojectName, err := project.FindCurrentSubproject(projectRoot, cwd)
-		if err == nil {
-			subprojectDir = config.GetSubprojectDir(projectRoot, subprojectName)
-			subprojectCfg, err = config.LoadSubprojectConfig(subprojectDir)
-			if err != nil {
-				return fmt.Errorf("failed to load subproject config: %w", err)
+		if err != nil {
+			if errors.Is(err, project.ErrNotInSubproject) {
+				return errors.New("not in a subproject. Navigate to a subproject directory")
 			}
+			return err
+		}
+
+		subprojectDir := config.GetSubprojectDir(projectRoot, subprojectName)
+		subprojectCfg, err := config.LoadSubprojectConfig(subprojectDir)
+		if err != nil {
+			return fmt.Errorf("failed to load subproject config: %w", err)
 		}
 
 		// Collect image paths
@@ -164,101 +157,83 @@ When running outside a subproject:
 
 		w := cmd.OutOrStdout()
 
-		// Handle generation result
-		if subprojectCfg != nil {
-			// Save to history
-			entry := history.NewEntry()
-			entry.Generation.PromptFile = history.PromptFile
+		// Save to history
+		entry := history.NewEntry()
+		entry.Generation.PromptFile = history.PromptFile
 
-			// Extract input image filenames
-			entry.Generation.InputImages = append(entry.Generation.InputImages, subprojectCfg.InputImages...)
+		// Extract input image filenames
+		entry.Generation.InputImages = append(entry.Generation.InputImages, subprojectCfg.InputImages...)
 
-			historyDir := config.GetHistoryDir(subprojectDir)
-			entryDir := entry.GetEntryDir(historyDir)
+		historyDir := config.GetHistoryDir(subprojectDir)
+		entryDir := entry.GetEntryDir(historyDir)
 
-			// Save prompt
-			if err := os.MkdirAll(entryDir, 0o755); err != nil {
-				return fmt.Errorf("failed to create history directory: %w", err)
-			}
-			if err := entry.SavePrompt(historyDir, promptText); err != nil {
-				return fmt.Errorf("failed to save prompt: %w", err)
-			}
+		// Save prompt
+		if err := os.MkdirAll(entryDir, 0o755); err != nil {
+			return fmt.Errorf("failed to create history directory: %w", err)
+		}
+		if err := entry.SavePrompt(historyDir, promptText); err != nil {
+			return fmt.Errorf("failed to save prompt: %w", err)
+		}
 
-			// Save context file
-			if subprojectCfg.ContextFile != "" {
-				contextPath := filepath.Join(subprojectDir, subprojectCfg.ContextFile)
-				if _, statErr := os.Stat(contextPath); statErr == nil {
-					if err := entry.SaveContextFile(historyDir, contextPath); err != nil {
-						_, _ = fmt.Fprintf(w, "Warning: failed to save context file: %v\n", err)
-					} else {
-						entry.Generation.ContextFile = history.ContextFile
-					}
+		// Save context file
+		if subprojectCfg.ContextFile != "" {
+			contextPath := filepath.Join(subprojectDir, subprojectCfg.ContextFile)
+			if _, statErr := os.Stat(contextPath); statErr == nil {
+				if err := entry.SaveContextFile(historyDir, contextPath); err != nil {
+					_, _ = fmt.Fprintf(w, "Warning: failed to save context file: %v\n", err)
+				} else {
+					entry.Generation.ContextFile = history.ContextFile
 				}
 			}
+		}
 
-			// Save character file
-			if subprojectCfg.CharacterFile != "" {
-				characterPath := filepath.Join(projectRoot, config.CharactersDir, subprojectCfg.CharacterFile)
-				if _, statErr := os.Stat(characterPath); statErr == nil {
-					if err := entry.SaveCharacterFile(historyDir, characterPath); err != nil {
-						_, _ = fmt.Fprintf(w, "Warning: failed to save character file: %v\n", err)
-					} else {
-						entry.Generation.CharacterFile = history.CharacterFile
-					}
+		// Save character file
+		if subprojectCfg.CharacterFile != "" {
+			characterPath := filepath.Join(projectRoot, config.CharactersDir, subprojectCfg.CharacterFile)
+			if _, statErr := os.Stat(characterPath); statErr == nil {
+				if err := entry.SaveCharacterFile(historyDir, characterPath); err != nil {
+					_, _ = fmt.Fprintf(w, "Warning: failed to save character file: %v\n", err)
+				} else {
+					entry.Generation.CharacterFile = history.CharacterFile
 				}
 			}
+		}
 
-			if err != nil {
-				// Clean up history directory on generation failure
-				if err := entry.Cleanup(historyDir); err != nil {
-					_, _ = fmt.Fprintf(w, "Warning: failed to clean up history directory: %v\n", err)
-				}
-				return fmt.Errorf("failed to generate image: %w", err)
+		if err != nil {
+			// Clean up history directory on generation failure
+			if err := entry.Cleanup(historyDir); err != nil {
+				_, _ = fmt.Fprintf(w, "Warning: failed to clean up history directory: %v\n", err)
 			}
+			return fmt.Errorf("failed to generate image: %w", err)
+		}
 
-			// Save generated images
-			saved, saveErr := saveInlineImages(resp, entryDir, "output")
-			if saveErr != nil {
-				// Clean up history directory on save failure
-				if err := entry.Cleanup(historyDir); err != nil {
-					_, _ = fmt.Fprintf(w, "Warning: failed to clean up history directory: %v\n", err)
-				}
-				return saveErr
+		// Save generated images
+		saved, saveErr := saveInlineImages(resp, entryDir, "output")
+		if saveErr != nil {
+			// Clean up history directory on save failure
+			if err := entry.Cleanup(historyDir); err != nil {
+				_, _ = fmt.Fprintf(w, "Warning: failed to clean up history directory: %v\n", err)
 			}
+			return saveErr
+		}
 
-			// Update entry with results
-			entry.Result.Success = true
-			for _, s := range saved {
-				entry.Result.OutputImages = append(entry.Result.OutputImages, filepath.Base(s))
-			}
-			entry.Result.TokenUsage = result.TokenUsage
+		// Update entry with results
+		entry.Result.Success = true
+		for _, s := range saved {
+			entry.Result.OutputImages = append(entry.Result.OutputImages, filepath.Base(s))
+		}
+		entry.Result.TokenUsage = result.TokenUsage
 
-			if err := entry.Save(historyDir); err != nil {
-				_, _ = fmt.Fprintf(w, "Warning: failed to save history: %v\n", err)
-			}
+		if err := entry.Save(historyDir); err != nil {
+			_, _ = fmt.Fprintf(w, "Warning: failed to save history: %v\n", err)
+		}
 
-			// Output
-			_, _ = fmt.Fprintf(w, "History ID: %s\n", entry.ID)
-			_, _ = fmt.Fprintln(w, "")
-			_, _ = fmt.Fprintln(w, "Generated files:")
-			for _, s := range saved {
-				_, _ = fmt.Fprintf(w, "  %s\n", filepath.Base(s))
-			}
-		} else {
-			// Legacy mode: save to output directory
-			if err != nil {
-				return fmt.Errorf("failed to generate image: %w", err)
-			}
-
-			saved, err := saveInlineImages(resp, genOpts.outputDir, genOpts.prefix)
-			if err != nil {
-				return err
-			}
-
-			_, _ = fmt.Fprintln(w, "Generated files:")
-			for _, path := range saved {
-				_, _ = fmt.Fprintf(w, "  %s\n", filepath.Base(path))
-			}
+		// Output
+		_, _ = fmt.Fprintf(w, "History ID: %s\n", entry.ID)
+		_, _ = fmt.Fprintln(w, "")
+		_, _ = fmt.Fprintln(w, "Generated files:")
+		for _, s := range saved {
+			_, _ = fmt.Fprintf(w, "  %s\n", filepath.Base(s))
 		}
 
 		printGenerationOutput(w, resp, model)
@@ -272,9 +247,7 @@ func init() {
 
 	generateCmd.Flags().StringVarP(&genOpts.prompt, "prompt", "p", "", "Prompt for generation")
 	generateCmd.Flags().StringVarP(&genOpts.promptFile, "prompt-file", "F", "", "Path to text file containing prompt")
-	generateCmd.Flags().StringSliceVarP(&genOpts.images, "image", "i", nil, "Image files to send with prompt (can specify multiple)")
-	generateCmd.Flags().StringVarP(&genOpts.outputDir, "output-dir", "o", "dist", "Directory to save generated images (outside subproject)")
-	generateCmd.Flags().StringVar(&genOpts.prefix, "prefix", "generated", "Filename prefix for saved files (outside subproject)")
+	generateCmd.Flags().StringSliceVarP(&genOpts.images, "image", "i", nil, "Additional image files to send with prompt (can specify multiple)")
 	generateCmd.Flags().StringVar(&genOpts.aspect, "aspect", "", "Output image aspect ratio (e.g., 1:1, 16:9)")
 	generateCmd.Flags().StringVar(&genOpts.size, "size", "", "Output image size (1K / 2K / 4K)")
 
@@ -302,8 +275,6 @@ func saveInlineImages(resp *genai.GenerateContentResponse, dir, prefix string) (
 		return nil, errors.New("response is empty")
 	}
 	runID := uuid.Must(uuid.NewV7())
-	dir = cmp.Or(dir, "dist")
-	prefix = cmp.Or(prefix, "generated")
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return nil, fmt.Errorf("failed to create output directory: %w", err)
 	}

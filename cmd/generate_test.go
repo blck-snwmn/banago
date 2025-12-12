@@ -3,7 +3,6 @@ package cmd
 import (
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/blck-snwmn/banago/internal/config"
@@ -121,9 +120,12 @@ func TestCollectImagePaths(t *testing.T) {
 
 	t.Run("from additional images only", func(t *testing.T) {
 		t.Parallel()
+		cfg := &config.SubprojectConfig{
+			InputImages: []string{},
+		}
 		additional := []string{"/path/to/img1.png", "/path/to/img2.jpg"}
 
-		got := collectImagePaths("", nil, additional)
+		got := collectImagePaths("", cfg, additional)
 
 		if len(got) != 2 {
 			t.Fatalf("collectImagePaths() returned %d paths, want 2", len(got))
@@ -146,17 +148,6 @@ func TestCollectImagePaths(t *testing.T) {
 
 		if len(got) != 2 {
 			t.Fatalf("collectImagePaths() returned %d paths, want 2", len(got))
-		}
-	})
-
-	t.Run("nil config", func(t *testing.T) {
-		t.Parallel()
-		additional := []string{"/path/to/img.png"}
-
-		got := collectImagePaths("", nil, additional)
-
-		if len(got) != 1 || got[0] != additional[0] {
-			t.Errorf("collectImagePaths() = %v, want %v", got, additional)
 		}
 	})
 
@@ -229,21 +220,10 @@ func TestResolveGenerationParams(t *testing.T) {
 		}
 	})
 
-	t.Run("nil config", func(t *testing.T) {
+	t.Run("empty config no flags", func(t *testing.T) {
 		t.Parallel()
-		aspect, size := resolveGenerationParams("1:1", "4K", nil)
-
-		if aspect != "1:1" {
-			t.Errorf("aspect = %q, want %q", aspect, "1:1")
-		}
-		if size != "4K" {
-			t.Errorf("size = %q, want %q", size, "4K")
-		}
-	})
-
-	t.Run("nil config no flags", func(t *testing.T) {
-		t.Parallel()
-		aspect, size := resolveGenerationParams("", "", nil)
+		cfg := &config.SubprojectConfig{}
+		aspect, size := resolveGenerationParams("", "", cfg)
 
 		if aspect != "" {
 			t.Errorf("aspect = %q, want empty", aspect)
@@ -448,40 +428,4 @@ func TestSaveInlineImages(t *testing.T) {
 		}
 	})
 
-	t.Run("default dir and prefix", func(t *testing.T) {
-		// Use temp dir as working directory
-		originalWd, _ := os.Getwd()
-		tmpDir := t.TempDir()
-		if err := os.Chdir(tmpDir); err != nil {
-			t.Fatalf("failed to chdir to tmpDir: %v", err)
-		}
-		defer func() { _ = os.Chdir(originalWd) }()
-
-		resp := &genai.GenerateContentResponse{
-			Candidates: []*genai.Candidate{
-				{
-					Content: &genai.Content{
-						Parts: []*genai.Part{
-							{
-								InlineData: &genai.Blob{
-									MIMEType: "image/png",
-									Data:     []byte{0x89, 0x50, 0x4E, 0x47},
-								},
-							},
-						},
-					},
-				},
-			},
-		}
-
-		saved, err := saveInlineImages(resp, "", "")
-		if err != nil {
-			t.Fatalf("saveInlineImages() error = %v", err)
-		}
-
-		// Should use default "dist" directory and "generated" prefix
-		if !strings.HasPrefix(filepath.Base(saved[0]), "generated-") {
-			t.Errorf("expected prefix 'generated-', got %s", filepath.Base(saved[0]))
-		}
-	})
 }
