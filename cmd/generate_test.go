@@ -353,7 +353,7 @@ func TestSaveInlineImages(t *testing.T) {
 			},
 		}
 
-		saved, err := saveInlineImages(resp, tmpDir, "test")
+		saved, err := saveInlineImages(resp, tmpDir)
 		if err != nil {
 			t.Fatalf("saveInlineImages() error = %v", err)
 		}
@@ -399,7 +399,7 @@ func TestSaveInlineImages(t *testing.T) {
 			},
 		}
 
-		saved, err := saveInlineImages(resp, tmpDir, "multi")
+		saved, err := saveInlineImages(resp, tmpDir)
 		if err != nil {
 			t.Fatalf("saveInlineImages() error = %v", err)
 		}
@@ -410,7 +410,7 @@ func TestSaveInlineImages(t *testing.T) {
 
 	t.Run("nil response", func(t *testing.T) {
 		t.Parallel()
-		_, err := saveInlineImages(nil, t.TempDir(), "test")
+		_, err := saveInlineImages(nil, t.TempDir())
 		if err == nil {
 			t.Error("saveInlineImages() expected error for nil response")
 		}
@@ -422,7 +422,7 @@ func TestSaveInlineImages(t *testing.T) {
 			Candidates: []*genai.Candidate{},
 		}
 
-		_, err := saveInlineImages(resp, t.TempDir(), "test")
+		_, err := saveInlineImages(resp, t.TempDir())
 		if err == nil {
 			t.Error("saveInlineImages() expected error for empty response")
 		}

@@ -208,7 +208,7 @@ Must be run inside a subproject directory:
 		}
 
 		// Save generated images
-		saved, saveErr := saveInlineImages(resp, entryDir, "output")
+		saved, saveErr := saveInlineImages(resp, entryDir)
 		if saveErr != nil {
 			// Clean up history directory on save failure
 			if err := entry.Cleanup(historyDir); err != nil {
@@ -270,7 +270,7 @@ func imagePartFromFile(path string) (*genai.Part, error) {
 	return genai.NewPartFromBytes(data, mimeType), nil
 }
 
-func saveInlineImages(resp *genai.GenerateContentResponse, dir, prefix string) ([]string, error) {
+func saveInlineImages(resp *genai.GenerateContentResponse, dir string) ([]string, error) {
 	if resp == nil {
 		return nil, errors.New("response is empty")
 	}
@@ -289,10 +289,8 @@ func saveInlineImages(resp *genai.GenerateContentResponse, dir, prefix string) (
 			if part == nil || part.InlineData == nil || len(part.InlineData.Data) == 0 {
 				continue
 			}
-			mimeType := part.InlineData.MIMEType
-			ext := normalizeExt(mimeType)
-
-			fileName := fmt.Sprintf("%s-%s-%d%s", prefix, runID, imageIndex+1, ext)
+			ext := normalizeExt(part.InlineData.MIMEType)
+			fileName := fmt.Sprintf("output-%s-%d%s", runID, imageIndex+1, ext)
 			fullPath := filepath.Join(dir, fileName)
 			if err := os.WriteFile(fullPath, part.InlineData.Data, 0o644); err != nil {
 				return nil, fmt.Errorf("failed to save image (%s): %w", fullPath, err)

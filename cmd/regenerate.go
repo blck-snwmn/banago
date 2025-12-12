@@ -164,7 +164,7 @@ Examples:
 		}
 
 		// Save generated images
-		saved, saveErr := saveInlineImages(resp, entryDir, "output")
+		saved, saveErr := saveInlineImages(resp, entryDir)
 		if saveErr != nil {
 			// Clean up history directory on save failure
 			if err := entry.Cleanup(historyDir); err != nil {
