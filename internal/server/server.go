@@ -187,10 +187,16 @@ func (s *Server) renderEntry(w http.ResponseWriter, subprojectName, entryID stri
 	entryDir := filepath.Join(historyDir, entryID)
 	prompt, _ := history.LoadPrompt(entryDir)
 
-	// Build image URLs
+	// Build output image URLs
 	var imageURLs []string
 	for _, img := range entry.Result.OutputImages {
 		imageURLs = append(imageURLs, fmt.Sprintf("/images/%s/%s/%s", subprojectName, entryID, img))
+	}
+
+	// Build input image URLs
+	var inputImageURLs []string
+	for _, img := range entry.Generation.InputImages {
+		inputImageURLs = append(inputImageURLs, fmt.Sprintf("/images/%s/%s/%s", subprojectName, entryID, img))
 	}
 
 	// Get prev/next entry IDs for navigation
@@ -201,6 +207,7 @@ func (s *Server) renderEntry(w http.ResponseWriter, subprojectName, entryID stri
 		Entry          *history.Entry
 		Prompt         string
 		ImageURLs      []string
+		InputImageURLs []string
 		PrevEntryID    string
 		NextEntryID    string
 	}{
@@ -208,6 +215,7 @@ func (s *Server) renderEntry(w http.ResponseWriter, subprojectName, entryID stri
 		Entry:          entry,
 		Prompt:         prompt,
 		ImageURLs:      imageURLs,
+		InputImageURLs: inputImageURLs,
 		PrevEntryID:    prevID,
 		NextEntryID:    nextID,
 	}
