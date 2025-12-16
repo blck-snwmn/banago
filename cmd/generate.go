@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/blck-snwmn/banago/internal/config"
-	"github.com/blck-snwmn/banago/internal/generator"
+	"github.com/blck-snwmn/banago/internal/gemini"
 	"github.com/blck-snwmn/banago/internal/history"
 	"github.com/blck-snwmn/banago/internal/project"
 	"github.com/spf13/cobra"
@@ -142,7 +142,7 @@ Must be run inside a subproject directory:
 
 		// Generate images
 		ctx := context.Background()
-		result := generator.Generate(ctx, cfg.apiKey, generator.Params{
+		result := gemini.Generate(ctx, cfg.apiKey, gemini.Params{
 			Model:       model,
 			Prompt:      promptText,
 			ImagePaths:  imagePaths,
@@ -186,7 +186,7 @@ Must be run inside a subproject directory:
 		}
 
 		// Save generated images
-		saved, saveErr := generator.SaveImages(resp, entryDir)
+		saved, saveErr := gemini.SaveImages(resp, entryDir)
 		if saveErr != nil {
 			// Clean up history directory on save failure
 			if err := entry.Cleanup(historyDir); err != nil {
@@ -214,7 +214,7 @@ Must be run inside a subproject directory:
 			_, _ = fmt.Fprintf(w, "  %s\n", filepath.Base(s))
 		}
 
-		generator.PrintOutput(w, resp, model)
+		gemini.PrintOutput(w, resp, model)
 
 		return nil
 	},

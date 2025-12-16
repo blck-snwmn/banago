@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/blck-snwmn/banago/internal/config"
-	"github.com/blck-snwmn/banago/internal/generator"
+	"github.com/blck-snwmn/banago/internal/gemini"
 	"google.golang.org/genai"
 )
 
@@ -263,7 +263,7 @@ func TestNormalizeExt(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			got := generator.NormalizeExt(tt.mimeType)
+			got := gemini.NormalizeExt(tt.mimeType)
 			if got != tt.want {
 				t.Errorf("normalizeExt(%q) = %q, want %q", tt.mimeType, got, tt.want)
 			}
@@ -295,7 +295,7 @@ func TestImagePartFromFile(t *testing.T) {
 			t.Fatalf("failed to write test file: %v", err)
 		}
 
-		part, err := generator.ImagePartFromFile(tmpFile)
+		part, err := gemini.ImagePartFromFile(tmpFile)
 		if err != nil {
 			t.Fatalf("imagePartFromFile() error = %v", err)
 		}
@@ -309,7 +309,7 @@ func TestImagePartFromFile(t *testing.T) {
 
 	t.Run("file not found", func(t *testing.T) {
 		t.Parallel()
-		_, err := generator.ImagePartFromFile("/nonexistent/path/to/image.png")
+		_, err := gemini.ImagePartFromFile("/nonexistent/path/to/image.png")
 		if err == nil {
 			t.Error("imagePartFromFile() expected error for nonexistent file")
 		}
@@ -323,7 +323,7 @@ func TestImagePartFromFile(t *testing.T) {
 			t.Fatalf("failed to write test file: %v", err)
 		}
 
-		_, err := generator.ImagePartFromFile(tmpFile)
+		_, err := gemini.ImagePartFromFile(tmpFile)
 		if err == nil {
 			t.Error("imagePartFromFile() expected error for non-image file")
 		}
@@ -354,7 +354,7 @@ func TestSaveInlineImages(t *testing.T) {
 			},
 		}
 
-		saved, err := generator.SaveImages(resp, tmpDir)
+		saved, err := gemini.SaveImages(resp, tmpDir)
 		if err != nil {
 			t.Fatalf("SaveImages() error = %v", err)
 		}
@@ -400,7 +400,7 @@ func TestSaveInlineImages(t *testing.T) {
 			},
 		}
 
-		saved, err := generator.SaveImages(resp, tmpDir)
+		saved, err := gemini.SaveImages(resp, tmpDir)
 		if err != nil {
 			t.Fatalf("SaveImages() error = %v", err)
 		}
@@ -411,7 +411,7 @@ func TestSaveInlineImages(t *testing.T) {
 
 	t.Run("nil response", func(t *testing.T) {
 		t.Parallel()
-		_, err := generator.SaveImages(nil, t.TempDir())
+		_, err := gemini.SaveImages(nil, t.TempDir())
 		if err == nil {
 			t.Error("SaveImages() expected error for nil response")
 		}
@@ -423,7 +423,7 @@ func TestSaveInlineImages(t *testing.T) {
 			Candidates: []*genai.Candidate{},
 		}
 
-		_, err := generator.SaveImages(resp, t.TempDir())
+		_, err := gemini.SaveImages(resp, t.TempDir())
 		if err == nil {
 			t.Error("SaveImages() expected error for empty response")
 		}

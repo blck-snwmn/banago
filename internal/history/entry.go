@@ -7,6 +7,7 @@ import (
 	"sort"
 	"time"
 
+	"github.com/blck-snwmn/banago/internal/gemini"
 	"github.com/google/uuid"
 	"gopkg.in/yaml.v3"
 )
@@ -29,19 +30,10 @@ type Generation struct {
 
 // Result contains generation results
 type Result struct {
-	Success      bool       `yaml:"success"`
-	OutputImages []string   `yaml:"output_images,omitempty"`
-	TokenUsage   TokenUsage `yaml:"token_usage,omitempty"`
-	ErrorMessage string     `yaml:"error_message,omitempty"`
-}
-
-// TokenUsage contains token usage information
-type TokenUsage struct {
-	Prompt     int `yaml:"prompt"`
-	Candidates int `yaml:"candidates"`
-	Total      int `yaml:"total"`
-	Cached     int `yaml:"cached,omitempty"`
-	Thoughts   int `yaml:"thoughts,omitempty"`
+	Success      bool             `yaml:"success"`
+	OutputImages []string         `yaml:"output_images,omitempty"`
+	TokenUsage   gemini.TokenUsage `yaml:"token_usage,omitempty"`
+	ErrorMessage string           `yaml:"error_message,omitempty"`
 }
 
 const (

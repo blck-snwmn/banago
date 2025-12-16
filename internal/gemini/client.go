@@ -1,4 +1,4 @@
-package generator
+package gemini
 
 import (
 	"context"
@@ -11,7 +11,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/blck-snwmn/banago/internal/history"
 	"github.com/google/uuid"
 	"google.golang.org/genai"
 )
@@ -29,7 +28,7 @@ type Params struct {
 type Result struct {
 	Response   *genai.GenerateContentResponse
 	Error      error
-	TokenUsage history.TokenUsage
+	TokenUsage TokenUsage
 }
 
 // Generate calls the Gemini API to generate images
@@ -71,7 +70,7 @@ func Generate(ctx context.Context, apiKey string, params Params) *Result {
 	}
 
 	if err == nil && resp != nil && resp.UsageMetadata != nil {
-		result.TokenUsage = history.TokenUsage{
+		result.TokenUsage = TokenUsage{
 			Prompt:     int(resp.UsageMetadata.PromptTokenCount),
 			Candidates: int(resp.UsageMetadata.CandidatesTokenCount),
 			Total:      int(resp.UsageMetadata.TotalTokenCount),
