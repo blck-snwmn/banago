@@ -4,18 +4,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"mime"
-	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/blck-snwmn/banago/internal/config"
+	"github.com/blck-snwmn/banago/internal/generator"
 	"github.com/blck-snwmn/banago/internal/history"
 	"github.com/blck-snwmn/banago/internal/project"
-	"github.com/google/uuid"
 	"github.com/spf13/cobra"
-	"google.golang.org/genai"
 )
 
 type generateOptions struct {
@@ -145,7 +142,7 @@ Must be run inside a subproject directory:
 
 		// Generate images
 		ctx := context.Background()
-		result := generateImages(ctx, cfg.apiKey, generationParams{
+		result := generator.Generate(ctx, cfg.apiKey, generator.Params{
 			Model:       model,
 			Prompt:      promptText,
 			ImagePaths:  imagePaths,
@@ -189,7 +186,7 @@ Must be run inside a subproject directory:
 		}
 
 		// Save generated images
-		saved, saveErr := saveInlineImages(resp, entryDir)
+		saved, saveErr := generator.SaveImages(resp, entryDir)
 		if saveErr != nil {
 			// Clean up history directory on save failure
 			if err := entry.Cleanup(historyDir); err != nil {
@@ -217,7 +214,7 @@ Must be run inside a subproject directory:
 			_, _ = fmt.Fprintf(w, "  %s\n", filepath.Base(s))
 		}
 
-		printGenerationOutput(w, resp, model)
+		generator.PrintOutput(w, resp, model)
 
 		return nil
 	},
@@ -234,83 +231,4 @@ func init() {
 
 	generateCmd.MarkFlagsOneRequired("prompt", "prompt-file")
 	generateCmd.MarkFlagsMutuallyExclusive("prompt", "prompt-file")
-}
-
-func imagePartFromFile(path string) (*genai.Part, error) {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read image (%s): %w", path, err)
-	}
-	mimeType := mime.TypeByExtension(strings.ToLower(filepath.Ext(path)))
-	if mimeType == "" {
-		mimeType = http.DetectContentType(data)
-	}
-	if !strings.HasPrefix(mimeType, "image/") {
-		return nil, fmt.Errorf("could not determine image MIME type (%s): %s", path, mimeType)
-	}
-	return genai.NewPartFromBytes(data, mimeType), nil
-}
-
-func saveInlineImages(resp *genai.GenerateContentResponse, dir string) ([]string, error) {
-	if resp == nil {
-		return nil, errors.New("response is empty")
-	}
-	runID := uuid.Must(uuid.NewV7())
-	if err := os.MkdirAll(dir, 0o755); err != nil {
-		return nil, fmt.Errorf("failed to create output directory: %w", err)
-	}
-
-	var saved []string
-	imageIndex := 0
-	for _, cand := range resp.Candidates {
-		if cand == nil || cand.Content == nil {
-			continue
-		}
-		for _, part := range cand.Content.Parts {
-			if part == nil || part.InlineData == nil || len(part.InlineData.Data) == 0 {
-				continue
-			}
-			ext := normalizeExt(part.InlineData.MIMEType)
-			fileName := fmt.Sprintf("output-%s-%d%s", runID, imageIndex+1, ext)
-			fullPath := filepath.Join(dir, fileName)
-			if err := os.WriteFile(fullPath, part.InlineData.Data, 0o644); err != nil {
-				return nil, fmt.Errorf("failed to save image (%s): %w", fullPath, err)
-			}
-			saved = append(saved, fullPath)
-			imageIndex++
-		}
-	}
-
-	if len(saved) == 0 {
-		return nil, errors.New("no image response found")
-	}
-
-	return saved, nil
-}
-
-func normalizeExt(mimeType string) string {
-	switch strings.ToLower(mimeType) {
-	case "image/jpeg", "image/jpg":
-		return ".jpg"
-	case "image/png":
-		return ".png"
-	case "image/webp":
-		return ".webp"
-	case "image/gif":
-		return ".gif"
-	case "image/bmp":
-		return ".bmp"
-	case "image/avif":
-		return ".avif"
-	case "image/heic":
-		return ".heic"
-	case "image/heif":
-		return ".heif"
-	case "image/tiff", "image/tif":
-		return ".tiff"
-	}
-	if strings.Contains(strings.ToLower(mimeType), "jpeg") {
-		return ".jpg"
-	}
-	return ".bin"
 }

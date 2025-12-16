@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/blck-snwmn/banago/internal/config"
+	"github.com/blck-snwmn/banago/internal/generator"
 	"google.golang.org/genai"
 )
 
@@ -262,7 +263,7 @@ func TestNormalizeExt(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			got := normalizeExt(tt.mimeType)
+			got := generator.NormalizeExt(tt.mimeType)
 			if got != tt.want {
 				t.Errorf("normalizeExt(%q) = %q, want %q", tt.mimeType, got, tt.want)
 			}
@@ -294,7 +295,7 @@ func TestImagePartFromFile(t *testing.T) {
 			t.Fatalf("failed to write test file: %v", err)
 		}
 
-		part, err := imagePartFromFile(tmpFile)
+		part, err := generator.ImagePartFromFile(tmpFile)
 		if err != nil {
 			t.Fatalf("imagePartFromFile() error = %v", err)
 		}
@@ -308,7 +309,7 @@ func TestImagePartFromFile(t *testing.T) {
 
 	t.Run("file not found", func(t *testing.T) {
 		t.Parallel()
-		_, err := imagePartFromFile("/nonexistent/path/to/image.png")
+		_, err := generator.ImagePartFromFile("/nonexistent/path/to/image.png")
 		if err == nil {
 			t.Error("imagePartFromFile() expected error for nonexistent file")
 		}
@@ -322,7 +323,7 @@ func TestImagePartFromFile(t *testing.T) {
 			t.Fatalf("failed to write test file: %v", err)
 		}
 
-		_, err := imagePartFromFile(tmpFile)
+		_, err := generator.ImagePartFromFile(tmpFile)
 		if err == nil {
 			t.Error("imagePartFromFile() expected error for non-image file")
 		}
@@ -353,12 +354,12 @@ func TestSaveInlineImages(t *testing.T) {
 			},
 		}
 
-		saved, err := saveInlineImages(resp, tmpDir)
+		saved, err := generator.SaveImages(resp, tmpDir)
 		if err != nil {
-			t.Fatalf("saveInlineImages() error = %v", err)
+			t.Fatalf("SaveImages() error = %v", err)
 		}
 		if len(saved) != 1 {
-			t.Fatalf("saveInlineImages() saved %d files, want 1", len(saved))
+			t.Fatalf("SaveImages() saved %d files, want 1", len(saved))
 		}
 
 		// Verify file exists
@@ -399,20 +400,20 @@ func TestSaveInlineImages(t *testing.T) {
 			},
 		}
 
-		saved, err := saveInlineImages(resp, tmpDir)
+		saved, err := generator.SaveImages(resp, tmpDir)
 		if err != nil {
-			t.Fatalf("saveInlineImages() error = %v", err)
+			t.Fatalf("SaveImages() error = %v", err)
 		}
 		if len(saved) != 2 {
-			t.Fatalf("saveInlineImages() saved %d files, want 2", len(saved))
+			t.Fatalf("SaveImages() saved %d files, want 2", len(saved))
 		}
 	})
 
 	t.Run("nil response", func(t *testing.T) {
 		t.Parallel()
-		_, err := saveInlineImages(nil, t.TempDir())
+		_, err := generator.SaveImages(nil, t.TempDir())
 		if err == nil {
-			t.Error("saveInlineImages() expected error for nil response")
+			t.Error("SaveImages() expected error for nil response")
 		}
 	})
 
@@ -422,9 +423,9 @@ func TestSaveInlineImages(t *testing.T) {
 			Candidates: []*genai.Candidate{},
 		}
 
-		_, err := saveInlineImages(resp, t.TempDir())
+		_, err := generator.SaveImages(resp, t.TempDir())
 		if err == nil {
-			t.Error("saveInlineImages() expected error for empty response")
+			t.Error("SaveImages() expected error for empty response")
 		}
 	})
 

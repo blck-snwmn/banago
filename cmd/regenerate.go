@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 
 	"github.com/blck-snwmn/banago/internal/config"
+	"github.com/blck-snwmn/banago/internal/generator"
 	"github.com/blck-snwmn/banago/internal/history"
 	"github.com/blck-snwmn/banago/internal/project"
 	"github.com/spf13/cobra"
@@ -116,7 +117,7 @@ Examples:
 
 		// Generate images
 		ctx := context.Background()
-		result := generateImages(ctx, cfg.apiKey, generationParams{
+		result := generator.Generate(ctx, cfg.apiKey, generator.Params{
 			Model:       model,
 			Prompt:      promptText,
 			ImagePaths:  imagePaths,
@@ -153,7 +154,7 @@ Examples:
 		}
 
 		// Save generated images
-		saved, saveErr := saveInlineImages(resp, entryDir)
+		saved, saveErr := generator.SaveImages(resp, entryDir)
 		if saveErr != nil {
 			// Clean up history directory on save failure
 			if err := entry.Cleanup(historyDir); err != nil {
@@ -181,7 +182,7 @@ Examples:
 			_, _ = fmt.Fprintf(w, "  %s\n", filepath.Base(s))
 		}
 
-		printGenerationOutput(w, resp, model)
+		generator.PrintOutput(w, resp, model)
 
 		return nil
 	},
