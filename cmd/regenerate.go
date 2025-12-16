@@ -71,13 +71,13 @@ Examples:
 			return err
 		}
 
-		subprojectDir := config.GetSubprojectDir(projectRoot, subprojectName)
+		subprojectDir := project.GetSubprojectDir(projectRoot, subprojectName)
 		subprojectCfg, err := config.LoadSubprojectConfig(subprojectDir)
 		if err != nil {
 			return fmt.Errorf("failed to load subproject config: %w", err)
 		}
 
-		historyDir := config.GetHistoryDir(subprojectDir)
+		historyDir := history.GetHistoryDir(subprojectDir)
 
 		// Load history entry
 		var sourceEntry *history.Entry

@@ -26,7 +26,7 @@ func setupTestProject(t *testing.T) string {
 func setupTestSubproject(t *testing.T, projectRoot, name string) string {
 	t.Helper()
 
-	subprojectDir := config.GetSubprojectDir(projectRoot, name)
+	subprojectDir := GetSubprojectDir(projectRoot, name)
 	if err := os.MkdirAll(subprojectDir, 0o755); err != nil {
 		t.Fatalf("failed to create subproject dir: %v", err)
 	}
@@ -153,7 +153,7 @@ func TestFindCurrentSubproject(t *testing.T) {
 		projectRoot := setupTestProject(t)
 
 		// Create subprojects dir without config
-		subprojectDir := filepath.Join(projectRoot, config.SubprojectsDir, "no-config")
+		subprojectDir := filepath.Join(projectRoot, subprojectsDir, "no-config")
 		if err := os.MkdirAll(subprojectDir, 0o755); err != nil {
 			t.Fatalf("failed to create subproject dir: %v", err)
 		}
@@ -203,7 +203,7 @@ func TestListSubprojects(t *testing.T) {
 		setupTestSubproject(t, projectRoot, "valid")
 
 		// Create dir without config
-		invalidDir := filepath.Join(projectRoot, config.SubprojectsDir, "invalid")
+		invalidDir := filepath.Join(projectRoot, subprojectsDir, "invalid")
 		if err := os.MkdirAll(invalidDir, 0o755); err != nil {
 			t.Fatalf("failed to create invalid dir: %v", err)
 		}

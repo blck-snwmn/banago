@@ -168,36 +168,6 @@ func TestSubprojectConfigExists(t *testing.T) {
 	})
 }
 
-func TestGetSubprojectDir(t *testing.T) {
-	t.Parallel()
-
-	result := GetSubprojectDir("/project", "my-sub")
-	want := filepath.Join("/project", SubprojectsDir, "my-sub")
-	if result != want {
-		t.Errorf("GetSubprojectDir() = %q, want %q", result, want)
-	}
-}
-
-func TestGetInputsDir(t *testing.T) {
-	t.Parallel()
-
-	result := GetInputsDir("/project/subprojects/my-sub")
-	want := filepath.Join("/project/subprojects/my-sub", inputsDir)
-	if result != want {
-		t.Errorf("GetInputsDir() = %q, want %q", result, want)
-	}
-}
-
-func TestGetHistoryDir(t *testing.T) {
-	t.Parallel()
-
-	result := GetHistoryDir("/project/subprojects/my-sub")
-	want := filepath.Join("/project/subprojects/my-sub", historyDir)
-	if result != want {
-		t.Errorf("GetHistoryDir() = %q, want %q", result, want)
-	}
-}
-
 func TestLoadSubprojectConfig_NotFound(t *testing.T) {
 	t.Parallel()
 

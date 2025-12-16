@@ -24,11 +24,8 @@ type SubprojectConfig struct {
 
 const (
 	subprojectConfigFile = "config.yaml"
-	SubprojectsDir       = "subprojects"
-	CharactersDir        = "characters"
-	inputsDir            = "inputs"
-	historyDir           = "history"
-	DefaultContextFile   = "context.md"
+	// DefaultContextFile is the default name of the context file
+	DefaultContextFile = "context.md"
 )
 
 // NewSubprojectConfig creates a new subproject configuration with defaults
@@ -77,19 +74,4 @@ func SubprojectConfigExists(dir string) bool {
 	path := filepath.Join(dir, subprojectConfigFile)
 	_, err := os.Stat(path)
 	return err == nil
-}
-
-// GetSubprojectDir returns the path to a subproject directory
-func GetSubprojectDir(projectRoot, name string) string {
-	return filepath.Join(projectRoot, SubprojectsDir, name)
-}
-
-// GetInputsDir returns the path to the inputs directory of a subproject
-func GetInputsDir(subprojectDir string) string {
-	return filepath.Join(subprojectDir, inputsDir)
-}
-
-// GetHistoryDir returns the path to the history directory of a subproject
-func GetHistoryDir(subprojectDir string) string {
-	return filepath.Join(subprojectDir, historyDir)
 }

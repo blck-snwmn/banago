@@ -29,8 +29,8 @@ func InitProject(dir, name string, force bool) error {
 
 	// Create directories
 	dirs := []string{
-		filepath.Join(dir, config.CharactersDir),
-		filepath.Join(dir, config.SubprojectsDir),
+		filepath.Join(dir, charactersDir),
+		filepath.Join(dir, subprojectsDir),
 	}
 	for _, d := range dirs {
 		if err := os.MkdirAll(d, 0o755); err != nil {

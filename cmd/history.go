@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/blck-snwmn/banago/internal/config"
 	"github.com/blck-snwmn/banago/internal/history"
 	"github.com/blck-snwmn/banago/internal/project"
 	"github.com/spf13/cobra"
@@ -42,8 +41,8 @@ var historyCmd = &cobra.Command{
 			return err
 		}
 
-		subprojectDir := config.GetSubprojectDir(projectRoot, subprojectName)
-		historyDir := config.GetHistoryDir(subprojectDir)
+		subprojectDir := project.GetSubprojectDir(projectRoot, subprojectName)
+		historyDir := history.GetHistoryDir(subprojectDir)
 
 		entries, err := history.ListEntries(historyDir)
 		if err != nil {

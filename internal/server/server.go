@@ -12,6 +12,7 @@ import (
 
 	"github.com/blck-snwmn/banago/internal/config"
 	"github.com/blck-snwmn/banago/internal/history"
+	"github.com/blck-snwmn/banago/internal/project"
 )
 
 //go:embed templates/*.html
@@ -109,13 +110,13 @@ func (s *Server) handleSubproject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	subprojectDir := config.GetSubprojectDir(s.projectRoot, name)
+	subprojectDir := project.GetSubprojectDir(s.projectRoot, name)
 	if !config.SubprojectConfigExists(subprojectDir) {
 		http.NotFound(w, r)
 		return
 	}
 
-	historyDir := config.GetHistoryDir(subprojectDir)
+	historyDir := history.GetHistoryDir(subprojectDir)
 	entries, err := history.ListEntries(historyDir)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -175,8 +176,8 @@ func (s *Server) handleEntry(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) renderEntry(w http.ResponseWriter, subprojectName, entryID string) {
-	subprojectDir := config.GetSubprojectDir(s.projectRoot, subprojectName)
-	historyDir := config.GetHistoryDir(subprojectDir)
+	subprojectDir := project.GetSubprojectDir(s.projectRoot, subprojectName)
+	historyDir := history.GetHistoryDir(subprojectDir)
 
 	entry, err := history.GetEntryByID(historyDir, entryID)
 	if err != nil {
@@ -265,8 +266,8 @@ func (s *Server) handleImage(w http.ResponseWriter, r *http.Request) {
 	}
 	subproject, entryID, filename := parts[0], parts[1], parts[2]
 
-	subprojectDir := config.GetSubprojectDir(s.projectRoot, subproject)
-	historyDir := config.GetHistoryDir(subprojectDir)
+	subprojectDir := project.GetSubprojectDir(s.projectRoot, subproject)
+	historyDir := history.GetHistoryDir(subprojectDir)
 	imagePath := filepath.Join(historyDir, entryID, filename)
 
 	// Security: ensure the path is within the history directory
@@ -289,7 +290,7 @@ func (s *Server) handleImage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) listSubprojects() ([]SubprojectInfo, error) {
-	subprojectsDir := filepath.Join(s.projectRoot, config.SubprojectsDir)
+	subprojectsDir := project.GetSubprojectsDir(s.projectRoot)
 
 	entries, err := os.ReadDir(subprojectsDir)
 	if err != nil {
@@ -316,8 +317,8 @@ func (s *Server) listSubprojects() ([]SubprojectInfo, error) {
 			description = cfg.Description
 		}
 
-		historyDir := config.GetHistoryDir(subprojectDir)
-		historyEntries, _ := history.ListEntries(historyDir)
+		hDir := history.GetHistoryDir(subprojectDir)
+		historyEntries, _ := history.ListEntries(hDir)
 
 		result = append(result, SubprojectInfo{
 			Name:        entry.Name(),

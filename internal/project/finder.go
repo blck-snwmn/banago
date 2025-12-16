@@ -43,9 +43,9 @@ func FindCurrentSubproject(projectRoot, cwd string) (string, error) {
 
 	// Check if we're inside subprojects/<name>/...
 	parts := strings.Split(rel, string(filepath.Separator))
-	if len(parts) >= 2 && parts[0] == config.SubprojectsDir {
+	if len(parts) >= 2 && parts[0] == subprojectsDir {
 		subprojectName := parts[1]
-		subprojectDir := config.GetSubprojectDir(projectRoot, subprojectName)
+		subprojectDir := GetSubprojectDir(projectRoot, subprojectName)
 		if config.SubprojectConfigExists(subprojectDir) {
 			return subprojectName, nil
 		}
@@ -56,9 +56,9 @@ func FindCurrentSubproject(projectRoot, cwd string) (string, error) {
 
 // listSubprojects returns a list of all subproject names in the project
 func listSubprojects(projectRoot string) ([]string, error) {
-	subprojectsDir := filepath.Join(projectRoot, config.SubprojectsDir)
+	spDir := filepath.Join(projectRoot, subprojectsDir)
 
-	entries, err := os.ReadDir(subprojectsDir)
+	entries, err := os.ReadDir(spDir)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return []string{}, nil
@@ -69,7 +69,7 @@ func listSubprojects(projectRoot string) ([]string, error) {
 	var names []string
 	for _, entry := range entries {
 		if entry.IsDir() {
-			subprojectDir := filepath.Join(subprojectsDir, entry.Name())
+			subprojectDir := filepath.Join(spDir, entry.Name())
 			if config.SubprojectConfigExists(subprojectDir) {
 				names = append(names, entry.Name())
 			}

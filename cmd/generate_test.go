@@ -7,6 +7,7 @@ import (
 
 	"github.com/blck-snwmn/banago/internal/config"
 	"github.com/blck-snwmn/banago/internal/gemini"
+	"github.com/blck-snwmn/banago/internal/project"
 	"google.golang.org/genai"
 )
 
@@ -104,7 +105,7 @@ func TestCollectImagePaths(t *testing.T) {
 
 		got := collectImagePaths(subprojectDir, cfg, nil)
 
-		inputsDir := config.GetInputsDir(subprojectDir)
+		inputsDir := project.GetInputsDir(subprojectDir)
 		want := []string{
 			filepath.Join(inputsDir, "img1.png"),
 			filepath.Join(inputsDir, "img2.jpg"),

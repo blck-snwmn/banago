@@ -6,12 +6,13 @@ import (
 	"path/filepath"
 
 	"github.com/blck-snwmn/banago/internal/config"
+	"github.com/blck-snwmn/banago/internal/history"
 	"github.com/blck-snwmn/banago/internal/templates"
 )
 
 // CreateSubproject creates a new subproject in the specified project
 func CreateSubproject(projectRoot, name, description string) error {
-	subprojectDir := config.GetSubprojectDir(projectRoot, name)
+	subprojectDir := GetSubprojectDir(projectRoot, name)
 
 	// Check if subproject already exists
 	if config.SubprojectConfigExists(subprojectDir) {
@@ -21,8 +22,8 @@ func CreateSubproject(projectRoot, name, description string) error {
 	// Create subproject directory structure
 	dirs := []string{
 		subprojectDir,
-		config.GetInputsDir(subprojectDir),
-		config.GetHistoryDir(subprojectDir),
+		GetInputsDir(subprojectDir),
+		history.GetHistoryDir(subprojectDir),
 	}
 	for _, d := range dirs {
 		if err := os.MkdirAll(d, 0o755); err != nil {
@@ -56,7 +57,7 @@ type SubprojectInfo struct {
 
 // getSubprojectInfo returns information about a specific subproject
 func getSubprojectInfo(projectRoot, name string) (*SubprojectInfo, error) {
-	subprojectDir := config.GetSubprojectDir(projectRoot, name)
+	subprojectDir := GetSubprojectDir(projectRoot, name)
 
 	cfg, err := config.LoadSubprojectConfig(subprojectDir)
 	if err != nil {

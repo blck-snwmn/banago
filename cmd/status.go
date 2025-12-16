@@ -62,7 +62,7 @@ var statusCmd = &cobra.Command{
 		}
 
 		// Show subproject-level status
-		subprojectDir := config.GetSubprojectDir(projectRoot, subprojectName)
+		subprojectDir := project.GetSubprojectDir(projectRoot, subprojectName)
 		subprojectCfg, err := config.LoadSubprojectConfig(subprojectDir)
 		if err != nil {
 			return fmt.Errorf("failed to load subproject config: %w", err)
@@ -84,7 +84,7 @@ var statusCmd = &cobra.Command{
 
 		// Character file
 		if subprojectCfg.CharacterFile != "" {
-			characterPath := filepath.Join(projectRoot, config.CharactersDir, subprojectCfg.CharacterFile)
+			characterPath := project.GetCharacterPath(projectRoot, subprojectCfg.CharacterFile)
 			relPath, _ := filepath.Rel(cwd, characterPath)
 			if _, err := os.Stat(characterPath); err == nil {
 				_, _ = fmt.Fprintf(w, "Character: %s\n", relPath)
@@ -99,7 +99,7 @@ var statusCmd = &cobra.Command{
 		if len(subprojectCfg.InputImages) == 0 {
 			_, _ = fmt.Fprintln(w, "  (none)")
 		} else {
-			inputsDir := config.GetInputsDir(subprojectDir)
+			inputsDir := project.GetInputsDir(subprojectDir)
 			for _, img := range subprojectCfg.InputImages {
 				imgPath := filepath.Join(inputsDir, img)
 				relPath, _ := filepath.Rel(cwd, imgPath)
@@ -113,7 +113,7 @@ var statusCmd = &cobra.Command{
 		_, _ = fmt.Fprintln(w, "")
 
 		// History summary
-		historyDir := config.GetHistoryDir(subprojectDir)
+		historyDir := history.GetHistoryDir(subprojectDir)
 		entries, err := history.ListEntries(historyDir)
 		if err != nil {
 			_, _ = fmt.Fprintln(w, "History: (load error)")

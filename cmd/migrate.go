@@ -72,7 +72,7 @@ The migration is idempotent - running it multiple times is safe.`,
 
 		for _, info := range subprojectInfos {
 			subprojectName := info.Name
-			subprojectDir := config.GetSubprojectDir(projectRoot, subprojectName)
+			subprojectDir := project.GetSubprojectDir(projectRoot, subprojectName)
 
 			// Load subproject config and check version
 			subprojectCfg, err := config.LoadSubprojectConfig(subprojectDir)
@@ -95,8 +95,8 @@ The migration is idempotent - running it multiple times is safe.`,
 				continue
 			}
 
-			historyDir := config.GetHistoryDir(subprojectDir)
-			inputsDir := config.GetInputsDir(subprojectDir)
+			historyDir := history.GetHistoryDir(subprojectDir)
+			inputsDir := project.GetInputsDir(subprojectDir)
 
 			entries, err := history.ListEntries(historyDir)
 			if err != nil {

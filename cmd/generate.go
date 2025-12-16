@@ -50,7 +50,7 @@ func resolvePrompt(prompt, promptFile string) (string, error) {
 func collectImagePaths(subprojectDir string, subprojectCfg *config.SubprojectConfig, additionalImages []string) []string {
 	var imagePaths []string
 	if len(subprojectCfg.InputImages) > 0 {
-		inputsDir := config.GetInputsDir(subprojectDir)
+		inputsDir := project.GetInputsDir(subprojectDir)
 		for _, img := range subprojectCfg.InputImages {
 			imagePaths = append(imagePaths, filepath.Join(inputsDir, img))
 		}
@@ -125,7 +125,7 @@ Must be run inside a subproject directory:
 			return err
 		}
 
-		subprojectDir := config.GetSubprojectDir(projectRoot, subprojectName)
+		subprojectDir := project.GetSubprojectDir(projectRoot, subprojectName)
 		subprojectCfg, err := config.LoadSubprojectConfig(subprojectDir)
 		if err != nil {
 			return fmt.Errorf("failed to load subproject config: %w", err)
@@ -161,7 +161,7 @@ Must be run inside a subproject directory:
 		// Extract input image filenames
 		entry.Generation.InputImages = append(entry.Generation.InputImages, subprojectCfg.InputImages...)
 
-		historyDir := config.GetHistoryDir(subprojectDir)
+		historyDir := history.GetHistoryDir(subprojectDir)
 		entryDir := entry.GetEntryDir(historyDir)
 
 		// Save prompt

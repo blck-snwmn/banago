@@ -9,6 +9,7 @@ import (
 
 	"github.com/blck-snwmn/banago/internal/config"
 	"github.com/blck-snwmn/banago/internal/history"
+	"github.com/blck-snwmn/banago/internal/project"
 )
 
 func setupTestProject(t *testing.T) string {
@@ -23,7 +24,7 @@ func setupTestProject(t *testing.T) string {
 	}
 
 	// Create subproject
-	subprojectDir := config.GetSubprojectDir(projectRoot, "test-subproject")
+	subprojectDir := project.GetSubprojectDir(projectRoot, "test-subproject")
 	if err := os.MkdirAll(subprojectDir, 0o755); err != nil {
 		t.Fatalf("failed to create subproject dir: %v", err)
 	}
@@ -34,7 +35,7 @@ func setupTestProject(t *testing.T) string {
 	}
 
 	// Create history entry with image
-	historyDir := config.GetHistoryDir(subprojectDir)
+	historyDir := history.GetHistoryDir(subprojectDir)
 	entryDir := filepath.Join(historyDir, "test-entry-id")
 	if err := os.MkdirAll(entryDir, 0o755); err != nil {
 		t.Fatalf("failed to create entry dir: %v", err)
