@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/blck-snwmn/banago/internal/config"
-	"github.com/blck-snwmn/banago/internal/gemini"
+	"github.com/blck-snwmn/banago/internal/generation"
 	"github.com/blck-snwmn/banago/internal/history"
 	"github.com/blck-snwmn/banago/internal/project"
 	"github.com/spf13/cobra"
@@ -140,83 +140,20 @@ Must be run inside a subproject directory:
 		// Determine aspect ratio and size
 		aspect, size := resolveGenerationParams(genOpts.aspect, genOpts.size, subprojectCfg)
 
-		// Generate images
-		ctx := context.Background()
-		result := gemini.Generate(ctx, cfg.apiKey, gemini.Params{
-			Model:       model,
-			Prompt:      promptText,
-			ImagePaths:  imagePaths,
-			AspectRatio: aspect,
-			ImageSize:   size,
-		})
-		resp := result.Response
-		err = result.Error
+		// Build generation context
+		genCtx := &generation.Context{
+			Model:           model,
+			Prompt:          promptText,
+			ImagePaths:      imagePaths,
+			AspectRatio:     aspect,
+			ImageSize:       size,
+			InputImageNames: subprojectCfg.InputImages,
+		}
 
-		w := cmd.OutOrStdout()
-
-		// Save to history
-		entry := history.NewEntry()
-		entry.Generation.PromptFile = history.PromptFile
-
-		// Extract input image filenames
-		entry.Generation.InputImages = append(entry.Generation.InputImages, subprojectCfg.InputImages...)
-
+		// Run generation
 		historyDir := history.GetHistoryDir(subprojectDir)
-		entryDir := entry.GetEntryDir(historyDir)
-
-		// Save prompt
-		if err := os.MkdirAll(entryDir, 0o755); err != nil {
-			return fmt.Errorf("failed to create history directory: %w", err)
-		}
-		if err := entry.SavePrompt(historyDir, promptText); err != nil {
-			return fmt.Errorf("failed to save prompt: %w", err)
-		}
-
-		// Save input images
-		if err := entry.SaveInputImages(historyDir, imagePaths); err != nil {
-			_, _ = fmt.Fprintf(w, "Warning: failed to save input images: %v\n", err)
-		}
-
-		if err != nil {
-			// Clean up history directory on generation failure
-			if err := entry.Cleanup(historyDir); err != nil {
-				_, _ = fmt.Fprintf(w, "Warning: failed to clean up history directory: %v\n", err)
-			}
-			return fmt.Errorf("failed to generate image: %w", err)
-		}
-
-		// Save generated images
-		saved, saveErr := gemini.SaveImages(resp, entryDir)
-		if saveErr != nil {
-			// Clean up history directory on save failure
-			if err := entry.Cleanup(historyDir); err != nil {
-				_, _ = fmt.Fprintf(w, "Warning: failed to clean up history directory: %v\n", err)
-			}
-			return saveErr
-		}
-
-		// Update entry with results
-		entry.Result.Success = true
-		for _, s := range saved {
-			entry.Result.OutputImages = append(entry.Result.OutputImages, filepath.Base(s))
-		}
-		entry.Result.TokenUsage = result.TokenUsage
-
-		if err := entry.Save(historyDir); err != nil {
-			_, _ = fmt.Fprintf(w, "Warning: failed to save history: %v\n", err)
-		}
-
-		// Output
-		_, _ = fmt.Fprintf(w, "History ID: %s\n", entry.ID)
-		_, _ = fmt.Fprintln(w, "")
-		_, _ = fmt.Fprintln(w, "Generated files:")
-		for _, s := range saved {
-			_, _ = fmt.Fprintf(w, "  %s\n", filepath.Base(s))
-		}
-
-		gemini.PrintOutput(w, resp, model)
-
-		return nil
+		_, err = generation.Run(context.Background(), cfg.apiKey, genCtx, historyDir, cmd.OutOrStdout())
+		return err
 	},
 }
 
