@@ -18,7 +18,6 @@ import (
 type generateOptions struct {
 	prompt     string
 	promptFile string
-	images     []string
 	aspect     string
 	size       string
 }
@@ -46,8 +45,8 @@ func resolvePrompt(prompt, promptFile string) (string, error) {
 	return "", errors.New("prompt is empty. Specify with --prompt or --prompt-file")
 }
 
-// collectImagePaths gathers image paths from subproject config and command flags.
-func collectImagePaths(subprojectDir string, subprojectCfg *config.SubprojectConfig, additionalImages []string) []string {
+// collectImagePaths gathers image paths from subproject config.
+func collectImagePaths(subprojectDir string, subprojectCfg *config.SubprojectConfig) []string {
 	var imagePaths []string
 	if len(subprojectCfg.InputImages) > 0 {
 		inputsDir := project.GetInputsDir(subprojectDir)
@@ -55,7 +54,6 @@ func collectImagePaths(subprojectDir string, subprojectCfg *config.SubprojectCon
 			imagePaths = append(imagePaths, filepath.Join(inputsDir, img))
 		}
 	}
-	imagePaths = append(imagePaths, additionalImages...)
 	return imagePaths
 }
 
@@ -81,8 +79,7 @@ var generateCmd = &cobra.Command{
 
 Must be run inside a subproject directory:
   - input_images from config.yaml are automatically used
-  - Results are saved to history/
-  - Additional images can be specified with --image`,
+  - Results are saved to history/`,
 	Args: cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, _ []string) error {
 		if err := requireAPIKey(); err != nil {
@@ -132,9 +129,9 @@ Must be run inside a subproject directory:
 		}
 
 		// Collect image paths
-		imagePaths := collectImagePaths(subprojectDir, subprojectCfg, genOpts.images)
+		imagePaths := collectImagePaths(subprojectDir, subprojectCfg)
 		if len(imagePaths) == 0 {
-			return errors.New("no images specified. Use --image or set input_images in subproject config.yaml")
+			return errors.New("no images specified. Set input_images in subproject config.yaml")
 		}
 
 		// Determine aspect ratio and size
@@ -162,7 +159,6 @@ func init() {
 
 	generateCmd.Flags().StringVarP(&genOpts.prompt, "prompt", "p", "", "Prompt for generation")
 	generateCmd.Flags().StringVarP(&genOpts.promptFile, "prompt-file", "F", "", "Path to text file containing prompt")
-	generateCmd.Flags().StringSliceVarP(&genOpts.images, "image", "i", nil, "Additional image files to send with prompt (can specify multiple)")
 	generateCmd.Flags().StringVar(&genOpts.aspect, "aspect", "", "Output image aspect ratio (e.g., 1:1, 16:9)")
 	generateCmd.Flags().StringVar(&genOpts.size, "size", "", "Output image size (1K / 2K / 4K)")
 

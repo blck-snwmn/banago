@@ -95,7 +95,7 @@ func TestResolvePrompt(t *testing.T) {
 func TestCollectImagePaths(t *testing.T) {
 	t.Parallel()
 
-	t.Run("from subproject config only", func(t *testing.T) {
+	t.Run("from subproject config", func(t *testing.T) {
 		t.Parallel()
 		tmpDir := t.TempDir()
 		subprojectDir := filepath.Join(tmpDir, "subprojects", "test")
@@ -103,7 +103,7 @@ func TestCollectImagePaths(t *testing.T) {
 			InputImages: []string{"img1.png", "img2.jpg"},
 		}
 
-		got := collectImagePaths(subprojectDir, cfg, nil)
+		got := collectImagePaths(subprojectDir, cfg)
 
 		inputsDir := project.GetInputsDir(subprojectDir)
 		want := []string{
@@ -120,50 +120,16 @@ func TestCollectImagePaths(t *testing.T) {
 		}
 	})
 
-	t.Run("from additional images only", func(t *testing.T) {
+	t.Run("empty config returns empty", func(t *testing.T) {
 		t.Parallel()
 		cfg := &config.SubprojectConfig{
 			InputImages: []string{},
 		}
-		additional := []string{"/path/to/img1.png", "/path/to/img2.jpg"}
 
-		got := collectImagePaths("", cfg, additional)
+		got := collectImagePaths("", cfg)
 
-		if len(got) != 2 {
-			t.Fatalf("collectImagePaths() returned %d paths, want 2", len(got))
-		}
-		if got[0] != additional[0] || got[1] != additional[1] {
-			t.Errorf("collectImagePaths() = %v, want %v", got, additional)
-		}
-	})
-
-	t.Run("combined", func(t *testing.T) {
-		t.Parallel()
-		tmpDir := t.TempDir()
-		subprojectDir := filepath.Join(tmpDir, "subprojects", "test")
-		cfg := &config.SubprojectConfig{
-			InputImages: []string{"config.png"},
-		}
-		additional := []string{"/extra/img.jpg"}
-
-		got := collectImagePaths(subprojectDir, cfg, additional)
-
-		if len(got) != 2 {
-			t.Fatalf("collectImagePaths() returned %d paths, want 2", len(got))
-		}
-	})
-
-	t.Run("empty config images", func(t *testing.T) {
-		t.Parallel()
-		cfg := &config.SubprojectConfig{
-			InputImages: []string{},
-		}
-		additional := []string{"/path/to/img.png"}
-
-		got := collectImagePaths("", cfg, additional)
-
-		if len(got) != 1 || got[0] != additional[0] {
-			t.Errorf("collectImagePaths() = %v, want %v", got, additional)
+		if len(got) != 0 {
+			t.Errorf("collectImagePaths() returned %d paths, want 0", len(got))
 		}
 	})
 }
