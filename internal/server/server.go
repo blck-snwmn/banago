@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
-	"os"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -53,8 +52,8 @@ func (s *Server) Start() error {
 	return http.ListenAndServe(addr, mux)
 }
 
-// SubprojectInfo contains subproject information for templates
-type SubprojectInfo struct {
+// SubprojectView contains subproject information for templates
+type SubprojectView struct {
 	Name        string
 	Description string
 	EntryCount  int
@@ -81,7 +80,7 @@ func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 
 	data := struct {
 		ProjectName string
-		Subprojects []SubprojectInfo
+		Subprojects []SubprojectView
 	}{
 		ProjectName: projectName,
 		Subprojects: subprojects,
@@ -289,40 +288,21 @@ func (s *Server) handleImage(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, imagePath)
 }
 
-func (s *Server) listSubprojects() ([]SubprojectInfo, error) {
-	subprojectsDir := project.GetSubprojectsDir(s.projectRoot)
-
-	entries, err := os.ReadDir(subprojectsDir)
+func (s *Server) listSubprojects() ([]SubprojectView, error) {
+	infos, err := project.ListSubprojectInfos(s.projectRoot)
 	if err != nil {
-		if os.IsNotExist(err) {
-			return []SubprojectInfo{}, nil
-		}
 		return nil, err
 	}
 
-	var result []SubprojectInfo
-	for _, entry := range entries {
-		if !entry.IsDir() {
-			continue
-		}
-
-		subprojectDir := filepath.Join(subprojectsDir, entry.Name())
-		if !config.SubprojectConfigExists(subprojectDir) {
-			continue
-		}
-
-		cfg, _ := config.LoadSubprojectConfig(subprojectDir)
-		description := ""
-		if cfg != nil {
-			description = cfg.Description
-		}
-
+	var result []SubprojectView
+	for _, info := range infos {
+		subprojectDir := project.GetSubprojectDir(s.projectRoot, info.Name)
 		hDir := history.GetHistoryDir(subprojectDir)
 		historyEntries, _ := history.ListEntries(hDir)
 
-		result = append(result, SubprojectInfo{
-			Name:        entry.Name(),
-			Description: description,
+		result = append(result, SubprojectView{
+			Name:        info.Name,
+			Description: info.Description,
 			EntryCount:  len(historyEntries),
 		})
 	}
