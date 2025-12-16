@@ -45,10 +45,8 @@ type TokenUsage struct {
 }
 
 const (
-	metaFile      = "meta.yaml"
-	PromptFile    = "prompt.txt"
-	ContextFile   = "context.md"
-	CharacterFile = "character.md"
+	metaFile   = "meta.yaml"
+	PromptFile = "prompt.txt"
 )
 
 // NewEntry creates a new history entry with a UUID v7 ID
@@ -65,8 +63,6 @@ func NewEntryFromSource(source *Entry) *Entry {
 	entry := NewEntry()
 	entry.Generation.PromptFile = source.Generation.PromptFile
 	entry.Generation.InputImages = append([]string{}, source.Generation.InputImages...)
-	entry.Generation.ContextFile = source.Generation.ContextFile
-	entry.Generation.CharacterFile = source.Generation.CharacterFile
 	return entry
 }
 
@@ -100,32 +96,32 @@ func (e *Entry) SavePrompt(historyDir, prompt string) error {
 	return nil
 }
 
-// SaveContextFile copies the context file to the entry directory
-func (e *Entry) SaveContextFile(historyDir, srcPath string) error {
-	data, err := os.ReadFile(srcPath)
-	if err != nil {
-		return fmt.Errorf("failed to read context file: %w", err)
-	}
+// SaveInputImages copies input images to the entry directory
+func (e *Entry) SaveInputImages(historyDir string, srcPaths []string) error {
 	entryDir := filepath.Join(historyDir, e.ID)
-	dstPath := filepath.Join(entryDir, ContextFile)
-	if err := os.WriteFile(dstPath, data, 0o644); err != nil {
-		return fmt.Errorf("failed to write context.md: %w", err)
+	for _, srcPath := range srcPaths {
+		data, err := os.ReadFile(srcPath)
+		if err != nil {
+			return fmt.Errorf("failed to read input image (%s): %w", srcPath, err)
+		}
+		dstPath := filepath.Join(entryDir, filepath.Base(srcPath))
+		if err := os.WriteFile(dstPath, data, 0o644); err != nil {
+			return fmt.Errorf("failed to save input image (%s): %w", dstPath, err)
+		}
 	}
 	return nil
 }
 
-// SaveCharacterFile copies the character file to the entry directory
-func (e *Entry) SaveCharacterFile(historyDir, srcPath string) error {
-	data, err := os.ReadFile(srcPath)
-	if err != nil {
-		return fmt.Errorf("failed to read character file: %w", err)
+// GetInputImagePaths returns paths to input images in the entry directory
+func GetInputImagePaths(entryDir string, filenames []string) []string {
+	var paths []string
+	for _, filename := range filenames {
+		path := filepath.Join(entryDir, filename)
+		if _, err := os.Stat(path); err == nil {
+			paths = append(paths, path)
+		}
 	}
-	entryDir := filepath.Join(historyDir, e.ID)
-	dstPath := filepath.Join(entryDir, CharacterFile)
-	if err := os.WriteFile(dstPath, data, 0o644); err != nil {
-		return fmt.Errorf("failed to write character.md: %w", err)
-	}
-	return nil
+	return paths
 }
 
 // GetEntryDir returns the path to the entry directory

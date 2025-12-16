@@ -29,8 +29,6 @@ func TestNewEntryFromSource(t *testing.T) {
 	source := NewEntry()
 	source.Generation.PromptFile = "prompt.txt"
 	source.Generation.InputImages = []string{"img1.png", "img2.jpg"}
-	source.Generation.ContextFile = "context.md"
-	source.Generation.CharacterFile = "char.md"
 
 	entry := NewEntryFromSource(source)
 
@@ -42,12 +40,6 @@ func TestNewEntryFromSource(t *testing.T) {
 	}
 	if len(entry.Generation.InputImages) != len(source.Generation.InputImages) {
 		t.Errorf("InputImages length = %d, want %d", len(entry.Generation.InputImages), len(source.Generation.InputImages))
-	}
-	if entry.Generation.ContextFile != source.Generation.ContextFile {
-		t.Errorf("ContextFile = %q, want %q", entry.Generation.ContextFile, source.Generation.ContextFile)
-	}
-	if entry.Generation.CharacterFile != source.Generation.CharacterFile {
-		t.Errorf("CharacterFile = %q, want %q", entry.Generation.CharacterFile, source.Generation.CharacterFile)
 	}
 
 	// Verify InputImages is a copy, not the same slice
@@ -113,7 +105,7 @@ func TestEntry_SavePrompt(t *testing.T) {
 	}
 }
 
-func TestEntry_SaveContextFile(t *testing.T) {
+func TestEntry_SaveInputImages(t *testing.T) {
 	t.Parallel()
 
 	historyDir := t.TempDir()
@@ -125,62 +117,72 @@ func TestEntry_SaveContextFile(t *testing.T) {
 		t.Fatalf("failed to create entry dir: %v", err)
 	}
 
-	// Create source context file
+	// Create source image files
 	srcDir := t.TempDir()
-	srcPath := filepath.Join(srcDir, "context.md")
-	contextContent := "# Context\nSome context info"
-	if err := os.WriteFile(srcPath, []byte(contextContent), 0o644); err != nil {
-		t.Fatalf("failed to write source file: %v", err)
+	imgPaths := []string{
+		filepath.Join(srcDir, "img1.png"),
+		filepath.Join(srcDir, "img2.jpg"),
+	}
+	for _, p := range imgPaths {
+		if err := os.WriteFile(p, []byte("dummy image data"), 0o644); err != nil {
+			t.Fatalf("failed to write source file: %v", err)
+		}
 	}
 
-	if err := entry.SaveContextFile(historyDir, srcPath); err != nil {
-		t.Fatalf("SaveContextFile() error = %v", err)
+	if err := entry.SaveInputImages(historyDir, imgPaths); err != nil {
+		t.Fatalf("SaveInputImages() error = %v", err)
 	}
 
-	// Verify
-	dstPath := filepath.Join(entryDir, ContextFile)
-	data, err := os.ReadFile(dstPath)
-	if err != nil {
-		t.Fatalf("failed to read saved file: %v", err)
-	}
-	if string(data) != contextContent {
-		t.Errorf("saved content = %q, want %q", string(data), contextContent)
+	// Verify files exist in entry directory
+	for _, p := range imgPaths {
+		dstPath := filepath.Join(entryDir, filepath.Base(p))
+		if _, err := os.Stat(dstPath); os.IsNotExist(err) {
+			t.Errorf("saved file does not exist: %s", dstPath)
+		}
 	}
 }
 
-func TestEntry_SaveCharacterFile(t *testing.T) {
+func TestGetInputImagePaths(t *testing.T) {
 	t.Parallel()
 
-	historyDir := t.TempDir()
-	entry := NewEntry()
+	t.Run("files exist", func(t *testing.T) {
+		t.Parallel()
+		entryDir := t.TempDir()
+		// Create test files
+		for _, name := range []string{"img1.png", "img2.jpg"} {
+			if err := os.WriteFile(filepath.Join(entryDir, name), []byte("data"), 0o644); err != nil {
+				t.Fatalf("failed to create file: %v", err)
+			}
+		}
 
-	// Create entry dir
-	entryDir := entry.GetEntryDir(historyDir)
-	if err := os.MkdirAll(entryDir, 0o755); err != nil {
-		t.Fatalf("failed to create entry dir: %v", err)
-	}
+		paths := GetInputImagePaths(entryDir, []string{"img1.png", "img2.jpg"})
+		if len(paths) != 2 {
+			t.Errorf("GetInputImagePaths() returned %d paths, want 2", len(paths))
+		}
+	})
 
-	// Create source character file
-	srcDir := t.TempDir()
-	srcPath := filepath.Join(srcDir, "char.md")
-	charContent := "# Character\nBlue hair, red eyes"
-	if err := os.WriteFile(srcPath, []byte(charContent), 0o644); err != nil {
-		t.Fatalf("failed to write source file: %v", err)
-	}
+	t.Run("files not exist", func(t *testing.T) {
+		t.Parallel()
+		entryDir := t.TempDir()
+		paths := GetInputImagePaths(entryDir, []string{"img1.png"})
+		if len(paths) != 0 {
+			t.Errorf("GetInputImagePaths() returned %d paths, want 0", len(paths))
+		}
+	})
 
-	if err := entry.SaveCharacterFile(historyDir, srcPath); err != nil {
-		t.Fatalf("SaveCharacterFile() error = %v", err)
-	}
+	t.Run("partial files exist", func(t *testing.T) {
+		t.Parallel()
+		entryDir := t.TempDir()
+		// Create only one file
+		if err := os.WriteFile(filepath.Join(entryDir, "img1.png"), []byte("data"), 0o644); err != nil {
+			t.Fatalf("failed to create file: %v", err)
+		}
 
-	// Verify
-	dstPath := filepath.Join(entryDir, CharacterFile)
-	data, err := os.ReadFile(dstPath)
-	if err != nil {
-		t.Fatalf("failed to read saved file: %v", err)
-	}
-	if string(data) != charContent {
-		t.Errorf("saved content = %q, want %q", string(data), charContent)
-	}
+		paths := GetInputImagePaths(entryDir, []string{"img1.png", "img2.jpg"})
+		if len(paths) != 1 {
+			t.Errorf("GetInputImagePaths() returned %d paths, want 1", len(paths))
+		}
+	})
 }
 
 func TestEntry_Cleanup(t *testing.T) {

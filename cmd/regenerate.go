@@ -103,15 +103,11 @@ Examples:
 		_, _ = fmt.Fprintf(w, "Regenerating from history: %s\n", sourceEntry.ID)
 		_, _ = fmt.Fprintln(w, "")
 
-		// Get input images from history entry
-		inputsDir := config.GetInputsDir(subprojectDir)
-		var imagePaths []string
-		for _, img := range sourceEntry.Generation.InputImages {
-			imagePaths = append(imagePaths, filepath.Join(inputsDir, img))
-		}
+		// Get input images from history entry directory
+		imagePaths := history.GetInputImagePaths(sourceEntryDir, sourceEntry.Generation.InputImages)
 
 		if len(imagePaths) == 0 {
-			return errors.New("no input images found in history entry")
+			return errors.New("no input images found in history entry. Run 'banago migrate' first")
 		}
 
 		// Determine aspect ratio and size from subproject config
@@ -143,16 +139,9 @@ Examples:
 			return fmt.Errorf("failed to save prompt: %w", saveErr)
 		}
 
-		// Copy context file from source if exists
-		if sourceEntry.Generation.ContextFile != "" {
-			srcContextPath := filepath.Join(sourceEntryDir, history.ContextFile)
-			_ = entry.SaveContextFile(historyDir, srcContextPath)
-		}
-
-		// Copy character file from source if exists
-		if sourceEntry.Generation.CharacterFile != "" {
-			srcCharPath := filepath.Join(sourceEntryDir, history.CharacterFile)
-			_ = entry.SaveCharacterFile(historyDir, srcCharPath)
+		// Save input images
+		if err := entry.SaveInputImages(historyDir, imagePaths); err != nil {
+			_, _ = fmt.Fprintf(w, "Warning: failed to save input images: %v\n", err)
 		}
 
 		if err != nil {

@@ -175,28 +175,9 @@ Must be run inside a subproject directory:
 			return fmt.Errorf("failed to save prompt: %w", err)
 		}
 
-		// Save context file
-		if subprojectCfg.ContextFile != "" {
-			contextPath := filepath.Join(subprojectDir, subprojectCfg.ContextFile)
-			if _, statErr := os.Stat(contextPath); statErr == nil {
-				if err := entry.SaveContextFile(historyDir, contextPath); err != nil {
-					_, _ = fmt.Fprintf(w, "Warning: failed to save context file: %v\n", err)
-				} else {
-					entry.Generation.ContextFile = history.ContextFile
-				}
-			}
-		}
-
-		// Save character file
-		if subprojectCfg.CharacterFile != "" {
-			characterPath := filepath.Join(projectRoot, config.CharactersDir, subprojectCfg.CharacterFile)
-			if _, statErr := os.Stat(characterPath); statErr == nil {
-				if err := entry.SaveCharacterFile(historyDir, characterPath); err != nil {
-					_, _ = fmt.Fprintf(w, "Warning: failed to save character file: %v\n", err)
-				} else {
-					entry.Generation.CharacterFile = history.CharacterFile
-				}
-			}
+		// Save input images
+		if err := entry.SaveInputImages(historyDir, imagePaths); err != nil {
+			_, _ = fmt.Fprintf(w, "Warning: failed to save input images: %v\n", err)
 		}
 
 		if err != nil {

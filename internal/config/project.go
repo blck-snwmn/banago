@@ -20,7 +20,7 @@ type ProjectConfig struct {
 const (
 	projectConfigFile = "banago.yaml"
 	defaultModel      = "gemini-3-pro-image-preview"
-	configVersion     = "1.0"
+	configVersion     = "2"
 )
 
 // NewProjectConfig creates a new project configuration with defaults
