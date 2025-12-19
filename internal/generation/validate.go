@@ -58,18 +58,18 @@ func validateInputImages(paths []string) error {
 	return nil
 }
 
-// validateContext validates the generation context before making API calls.
-func validateContext(ctx *Context) error {
-	if err := validateAspectRatio(ctx.AspectRatio); err != nil {
+// validateSpec validates the generation spec before making API calls.
+func validateSpec(spec Spec) error {
+	if err := validateAspectRatio(spec.AspectRatio); err != nil {
 		return err
 	}
-	if err := validateImageSize(ctx.ImageSize); err != nil {
+	if err := validateImageSize(spec.ImageSize); err != nil {
 		return err
 	}
-	if len(ctx.ImagePaths) == 0 {
+	if len(spec.ImagePaths) == 0 {
 		return errors.New("no input images specified")
 	}
-	if err := validateInputImages(ctx.ImagePaths); err != nil {
+	if err := validateInputImages(spec.ImagePaths); err != nil {
 		return err
 	}
 	return nil

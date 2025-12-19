@@ -18,24 +18,24 @@ type Result struct {
 }
 
 // Run executes the generation workflow and saves the result to history.
-func Run(ctx context.Context, apiKey string, genCtx *Context, historyDir string, w io.Writer) (*Result, error) {
+func Run(ctx context.Context, apiKey string, spec Spec, historyDir string, w io.Writer) (*Result, error) {
 	// Validate inputs before any work
-	if err := validateContext(genCtx); err != nil {
+	if err := validateSpec(spec); err != nil {
 		return nil, err
 	}
 
 	// Create history entry
 	var entry *history.Entry
-	if genCtx.SourceEntryID != "" {
+	if spec.SourceEntryID != "" {
 		// For regeneration, create entry linked to source
-		sourceEntry := &history.Entry{ID: genCtx.SourceEntryID}
+		sourceEntry := &history.Entry{ID: spec.SourceEntryID}
 		entry = history.NewEntryFromSource(sourceEntry)
 	} else {
 		entry = history.NewEntry()
 	}
 
 	entry.Generation.PromptFile = history.PromptFile
-	entry.Generation.InputImages = genCtx.InputImageNames
+	entry.Generation.InputImages = spec.InputImageNames
 
 	entryDir := entry.GetEntryDir(historyDir)
 
@@ -43,22 +43,22 @@ func Run(ctx context.Context, apiKey string, genCtx *Context, historyDir string,
 	if err := os.MkdirAll(entryDir, 0o755); err != nil {
 		return nil, fmt.Errorf("failed to create history directory: %w", err)
 	}
-	if err := entry.SavePrompt(historyDir, genCtx.Prompt); err != nil {
+	if err := entry.SavePrompt(historyDir, spec.Prompt); err != nil {
 		return nil, fmt.Errorf("failed to save prompt: %w", err)
 	}
 
 	// Save input images
-	if err := entry.SaveInputImages(historyDir, genCtx.ImagePaths); err != nil {
+	if err := entry.SaveInputImages(historyDir, spec.ImagePaths); err != nil {
 		_, _ = fmt.Fprintf(w, "Warning: failed to save input images: %v\n", err)
 	}
 
 	// Call Gemini API
 	result := gemini.Generate(ctx, apiKey, gemini.Params{
-		Model:       genCtx.Model,
-		Prompt:      genCtx.Prompt,
-		ImagePaths:  genCtx.ImagePaths,
-		AspectRatio: genCtx.AspectRatio,
-		ImageSize:   genCtx.ImageSize,
+		Model:       spec.Model,
+		Prompt:      spec.Prompt,
+		ImagePaths:  spec.ImagePaths,
+		AspectRatio: spec.AspectRatio,
+		ImageSize:   spec.ImageSize,
 	})
 
 	if result.Error != nil {
@@ -98,7 +98,7 @@ func Run(ctx context.Context, apiKey string, genCtx *Context, historyDir string,
 		_, _ = fmt.Fprintf(w, "  %s\n", filepath.Base(s))
 	}
 
-	gemini.PrintOutput(w, result.Response, genCtx.Model)
+	gemini.PrintOutput(w, result.Response, spec.Model)
 
 	return &Result{
 		EntryID:      entry.ID,

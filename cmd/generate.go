@@ -137,8 +137,8 @@ Must be run inside a subproject directory:
 		// Determine aspect ratio and size
 		aspect, size := resolveGenerationParams(genOpts.aspect, genOpts.size, subprojectCfg)
 
-		// Build generation context
-		genCtx := &generation.Context{
+		// Build generation spec
+		spec := generation.Spec{
 			Model:           model,
 			Prompt:          promptText,
 			ImagePaths:      imagePaths,
@@ -149,7 +149,7 @@ Must be run inside a subproject directory:
 
 		// Run generation
 		historyDir := history.GetHistoryDir(subprojectDir)
-		_, err = generation.Run(context.Background(), cfg.apiKey, genCtx, historyDir, cmd.OutOrStdout())
+		_, err = generation.Run(context.Background(), cfg.apiKey, spec, historyDir, cmd.OutOrStdout())
 		return err
 	},
 }

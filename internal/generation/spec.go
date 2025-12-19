@@ -1,7 +1,7 @@
 package generation
 
-// Context holds all information needed for generation and to be saved to history.
-type Context struct {
+// Spec holds all information needed for generation and to be saved to history.
+type Spec struct {
 	// Generation parameters
 	Model       string
 	Prompt      string

@@ -111,8 +111,8 @@ Examples:
 			return errors.New("no input images found in history entry. Run 'banago migrate' first")
 		}
 
-		// Build generation context
-		genCtx := &generation.Context{
+		// Build generation spec
+		spec := generation.Spec{
 			Model:           model,
 			Prompt:          promptText,
 			ImagePaths:      imagePaths,
@@ -123,7 +123,7 @@ Examples:
 		}
 
 		// Run generation
-		_, err = generation.Run(context.Background(), cfg.apiKey, genCtx, historyDir, w)
+		_, err = generation.Run(context.Background(), cfg.apiKey, spec, historyDir, w)
 		return err
 	},
 }

@@ -117,98 +117,98 @@ func Test_validateInputImages(t *testing.T) {
 	})
 }
 
-func Test_validateContext(t *testing.T) {
+func Test_validateSpec(t *testing.T) {
 	t.Parallel()
 
 	testFile := filepath.Join("..", "..", "testdata", "sample.png")
 
-	t.Run("valid context", func(t *testing.T) {
+	t.Run("valid spec", func(t *testing.T) {
 		t.Parallel()
-		ctx := &Context{
+		spec := Spec{
 			Model:       "gemini-2.0-flash-exp-image-generation",
 			Prompt:      "test prompt",
 			ImagePaths:  []string{testFile},
 			AspectRatio: "16:9",
 			ImageSize:   "2K",
 		}
-		err := validateContext(ctx)
+		err := validateSpec(spec)
 		if err != nil {
-			t.Errorf("validateContext() error = %v, want nil", err)
+			t.Errorf("validateSpec() error = %v, want nil", err)
 		}
 	})
 
 	t.Run("invalid aspect ratio", func(t *testing.T) {
 		t.Parallel()
-		ctx := &Context{
+		spec := Spec{
 			Model:       "gemini-2.0-flash-exp-image-generation",
 			Prompt:      "test prompt",
 			ImagePaths:  []string{testFile},
 			AspectRatio: "invalid",
 			ImageSize:   "2K",
 		}
-		err := validateContext(ctx)
+		err := validateSpec(spec)
 		if err == nil {
-			t.Error("validateContext() expected error for invalid aspect ratio")
+			t.Error("validateSpec() expected error for invalid aspect ratio")
 		}
 	})
 
 	t.Run("invalid image size", func(t *testing.T) {
 		t.Parallel()
-		ctx := &Context{
+		spec := Spec{
 			Model:       "gemini-2.0-flash-exp-image-generation",
 			Prompt:      "test prompt",
 			ImagePaths:  []string{testFile},
 			AspectRatio: "16:9",
 			ImageSize:   "8K",
 		}
-		err := validateContext(ctx)
+		err := validateSpec(spec)
 		if err == nil {
-			t.Error("validateContext() expected error for invalid image size")
+			t.Error("validateSpec() expected error for invalid image size")
 		}
 	})
 
 	t.Run("no input images", func(t *testing.T) {
 		t.Parallel()
-		ctx := &Context{
+		spec := Spec{
 			Model:       "gemini-2.0-flash-exp-image-generation",
 			Prompt:      "test prompt",
 			ImagePaths:  []string{},
 			AspectRatio: "16:9",
 			ImageSize:   "2K",
 		}
-		err := validateContext(ctx)
+		err := validateSpec(spec)
 		if err == nil {
-			t.Error("validateContext() expected error for no input images")
+			t.Error("validateSpec() expected error for no input images")
 		}
 	})
 
 	t.Run("missing input image", func(t *testing.T) {
 		t.Parallel()
-		ctx := &Context{
+		spec := Spec{
 			Model:       "gemini-2.0-flash-exp-image-generation",
 			Prompt:      "test prompt",
 			ImagePaths:  []string{"/nonexistent/image.png"},
 			AspectRatio: "16:9",
 			ImageSize:   "2K",
 		}
-		err := validateContext(ctx)
+		err := validateSpec(spec)
 		if err == nil {
-			t.Error("validateContext() expected error for missing input image")
+			t.Error("validateSpec() expected error for missing input image")
 		}
 	})
 
 	t.Run("empty optional fields allowed", func(t *testing.T) {
 		t.Parallel()
-		ctx := &Context{
+		spec := Spec{
 			Model:       "gemini-2.0-flash-exp-image-generation",
 			Prompt:      "test prompt",
 			ImagePaths:  []string{testFile},
 			AspectRatio: "",
 			ImageSize:   "",
 		}
-		err := validateContext(ctx)
+		err := validateSpec(spec)
 		if err != nil {
-			t.Errorf("validateContext() error = %v, want nil for empty optional fields", err)
+			t.Errorf("validateSpec() error = %v, want nil for empty optional fields", err)
 		}
 	})
 }
