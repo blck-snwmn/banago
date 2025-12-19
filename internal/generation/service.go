@@ -19,6 +19,11 @@ type Result struct {
 
 // Run executes the generation workflow and saves the result to history.
 func Run(ctx context.Context, apiKey string, genCtx *Context, historyDir string, w io.Writer) (*Result, error) {
+	// Validate inputs before any work
+	if err := validateContext(genCtx); err != nil {
+		return nil, err
+	}
+
 	// Create history entry
 	var entry *history.Entry
 	if genCtx.SourceEntryID != "" {
