@@ -93,6 +93,10 @@
             background: #4a1515;
             color: #f8b4b4;
         }
+        .badge-edit {
+            background: #1a3a5c;
+            color: #7ec8e3;
+        }
         .empty {
             text-align: center;
             padding: 4rem;
@@ -132,6 +136,9 @@
                         <span class="badge badge-success">{{.ImageCount}} images</span>
                         {{else}}
                         <span class="badge badge-error">Failed</span>
+                        {{end}}
+                        {{if gt .EditCount 0}}
+                        <span class="badge badge-edit">{{.EditCount}} edits</span>
                         {{end}}
                         {{.CreatedAt}}
                     </div>

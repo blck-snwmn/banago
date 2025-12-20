@@ -100,6 +100,23 @@ banago history
 4. **Show improved prompt to user and get confirmation**
 5. Generate again with ` + "`banago generate --prompt-file prompt.txt`" + `
 
+### Step 7: Edit Generated Images (Optional)
+
+Use ` + "`banago edit`" + ` for small fixes (e.g., wrong button color, minor adjustments):
+
+` + "```bash" + `
+# Edit the latest generated image
+banago edit --latest -p "Change the button color to red"
+
+# Edit a specific history entry
+banago edit --id <uuid> -p "Fix the background lighting"
+
+# Chain edits (edit an edited image)
+banago edit --latest --edit-latest -p "Further adjust the shadows"
+` + "```" + `
+
+**Important**: Edit is for small fixes, not regeneration. For major changes, use ` + "`generate`" + ` with an improved prompt.
+
 ---
 
 ## Command Reference
@@ -113,6 +130,9 @@ banago history
 | ` + "`banago generate --prompt-file <path>`" + ` | Generate with prompt file (recommended) |
 | ` + "`banago regenerate --latest`" + ` | Regenerate with latest history |
 | ` + "`banago regenerate --id <uuid>`" + ` | Regenerate with specific history |
+| ` + "`banago edit --latest -p \"...\"`" + ` | Edit latest generated image |
+| ` + "`banago edit --latest --edit-latest -p \"...\"`" + ` | Edit latest edit result |
+| ` + "`banago edit --id <uuid> -p \"...\"`" + ` | Edit specific history entry |
 
 ## Project Structure
 
@@ -133,7 +153,12 @@ banago history
                 ├── context.md    # Context at generation time
                 ├── character.md  # Character info (if configured)
                 ├── output_*.png  # Generated images
-                └── meta.yaml     # Metadata
+                ├── meta.yaml     # Metadata
+                └── edits/        # Edit history
+                    └── <edit-uuid>/
+                        ├── edit-prompt.txt  # Edit prompt
+                        ├── edit-meta.yaml   # Edit metadata
+                        └── output_*.png     # Edited images
 ` + "```" + `
 
 ## Important Rules

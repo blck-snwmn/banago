@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/blck-snwmn/banago/internal/history"
 	"github.com/blck-snwmn/banago/internal/project"
@@ -79,6 +80,22 @@ var historyCmd = &cobra.Command{
 			if entry.Result.Success && len(entry.Result.OutputImages) > 0 {
 				_, _ = fmt.Fprintf(w, "      Output: %d images\n", len(entry.Result.OutputImages))
 			}
+
+			// List edits
+			entryDir := filepath.Join(historyDir, entry.ID)
+			edits, _ := history.ListEditEntries(entryDir)
+			if len(edits) > 0 {
+				_, _ = fmt.Fprintf(w, "      Edits:\n")
+				for _, edit := range edits {
+					editStatus := "✓"
+					if !edit.Result.Success {
+						editStatus = "✗"
+					}
+					_, _ = fmt.Fprintf(w, "        %s %s\n", editStatus, edit.ID)
+					_, _ = fmt.Fprintf(w, "            Date: %s\n", edit.CreatedAt)
+				}
+			}
+
 			if !entry.Result.Success && entry.Result.ErrorMessage != "" {
 				_, _ = fmt.Fprintf(w, "      Error: %s\n", entry.Result.ErrorMessage)
 			}

@@ -241,6 +241,70 @@
         .modal.active {
             display: block;
         }
+        .edits-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        .edit-entry {
+            background: #0f3460;
+            border-radius: 8px;
+            padding: 1rem;
+        }
+        .edit-header {
+            margin-bottom: 0.75rem;
+        }
+        .edit-id {
+            font-family: monospace;
+            font-size: 0.85rem;
+            color: #7ec8e3;
+            word-break: break-all;
+        }
+        .edit-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 0.25rem;
+            font-size: 0.8rem;
+            color: #888;
+        }
+        .edit-source {
+            color: #666;
+        }
+        .edit-prompt {
+            background: #16213e;
+            border-radius: 6px;
+            padding: 0.75rem;
+            font-family: monospace;
+            font-size: 0.8rem;
+            white-space: pre-wrap;
+            word-break: break-word;
+            margin-bottom: 0.75rem;
+            max-height: 150px;
+            overflow-y: auto;
+            line-height: 1.4;
+        }
+        .edit-images {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 0.5rem;
+        }
+        .edit-image-card {
+            background: #1a1a2e;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        .edit-image-card img {
+            width: 100%;
+            height: 200px;
+            object-fit: contain;
+            display: block;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .edit-image-card img:hover {
+            opacity: 0.9;
+        }
     </style>
 </head>
 <body>
@@ -284,6 +348,35 @@
                         {{range .InputImageURLs}}
                         <div class="input-image-card">
                             <img src="{{.}}" alt="Input image" onclick="openModal(this.src)">
+                        </div>
+                        {{end}}
+                    </div>
+                </div>
+                {{end}}
+
+                {{if .Edits}}
+                <div class="section">
+                    <h2 class="section-title">Edits ({{len .Edits}})</h2>
+                    <div class="edits-list">
+                        {{range .Edits}}
+                        <div class="edit-entry">
+                            <div class="edit-header">
+                                <div class="edit-id">{{.ID}}</div>
+                                <div class="edit-meta">
+                                    <span class="edit-date">{{.CreatedAt}}</span>
+                                    <span class="edit-source">from {{.SourceType}}: {{.SourceOutput}}</span>
+                                </div>
+                            </div>
+                            {{if .Prompt}}
+                            <div class="edit-prompt">{{.Prompt}}</div>
+                            {{end}}
+                            <div class="edit-images">
+                                {{range .ImageURLs}}
+                                <div class="edit-image-card">
+                                    <img src="{{.}}" alt="Edited image" onclick="openModal(this.src)">
+                                </div>
+                                {{end}}
+                            </div>
                         </div>
                         {{end}}
                     </div>

@@ -1,0 +1,261 @@
+package cmd
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
+
+	"github.com/blck-snwmn/banago/internal/config"
+	"github.com/blck-snwmn/banago/internal/gemini"
+	"github.com/blck-snwmn/banago/internal/history"
+	"github.com/blck-snwmn/banago/internal/project"
+	"github.com/spf13/cobra"
+)
+
+type editOptions struct {
+	id         string
+	latest     bool
+	editID     string
+	editLatest bool
+	prompt     string
+	promptFile string
+}
+
+var editOpts editOptions
+
+var editCmd = &cobra.Command{
+	Use:   "edit",
+	Short: "Edit a generated image",
+	Long: `Edit a generated image using Gemini's image editing capabilities.
+
+Uses an existing output image as input and applies the edit prompt.
+Results are saved in the edits/ subdirectory of the history entry.
+
+Examples:
+  banago edit --latest -p "Change the button color to red"
+  banago edit --latest --edit-latest -p "Further adjust the background"
+  banago edit --id <uuid> -p "Fix the background"
+  banago edit --id <uuid> --edit-id <edit-uuid> -p "Additional adjustments"`,
+	Args: cobra.NoArgs,
+	RunE: runEdit,
+}
+
+func runEdit(cmd *cobra.Command, _ []string) error {
+	if err := requireAPIKey(); err != nil {
+		return err
+	}
+
+	// Validate flags
+	if !editOpts.latest && editOpts.id == "" {
+		return errors.New("specify --latest or --id <uuid>")
+	}
+
+	promptText, err := resolveEditPrompt(editOpts.prompt, editOpts.promptFile)
+	if err != nil {
+		return err
+	}
+
+	// Must be in a subproject
+	cwd, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("failed to get current directory: %w", err)
+	}
+
+	projectRoot, err := project.FindProjectRoot(cwd)
+	if err != nil {
+		if errors.Is(err, project.ErrProjectNotFound) {
+			return errors.New("banago project not found. Run 'banago init' first")
+		}
+		return err
+	}
+
+	// Load project config
+	projectCfg, err := config.LoadProjectConfig(projectRoot)
+	if err != nil {
+		return fmt.Errorf("failed to load project config: %w", err)
+	}
+	model := projectCfg.Model
+
+	subprojectName, err := project.FindCurrentSubproject(projectRoot, cwd)
+	if err != nil {
+		if errors.Is(err, project.ErrNotInSubproject) {
+			return errors.New("not in a subproject. Navigate to a subproject directory")
+		}
+		return err
+	}
+
+	subprojectDir := project.GetSubprojectDir(projectRoot, subprojectName)
+	historyDir := history.GetHistoryDir(subprojectDir)
+
+	// Load generate entry
+	var genEntry *history.Entry
+	if editOpts.latest {
+		genEntry, err = history.GetLatestEntry(historyDir)
+		if err != nil {
+			return fmt.Errorf("failed to get latest history: %w", err)
+		}
+	} else {
+		genEntry, err = history.GetEntryByID(historyDir, editOpts.id)
+		if err != nil {
+			return fmt.Errorf("failed to get history entry: %w", err)
+		}
+	}
+
+	entryDir := filepath.Join(historyDir, genEntry.ID)
+
+	// Determine source image path and source info
+	var sourceImagePath string
+	var sourceType string
+	var sourceEditID string
+	var sourceOutput string
+
+	if editOpts.editLatest || editOpts.editID != "" {
+		// Edit from an existing edit
+		var editEntry *history.EditEntry
+		if editOpts.editLatest {
+			editEntry, err = history.GetLatestEditEntry(entryDir)
+			if err != nil {
+				return fmt.Errorf("failed to get latest edit: %w", err)
+			}
+		} else {
+			editEntry, err = history.GetEditEntryByID(entryDir, editOpts.editID)
+			if err != nil {
+				return fmt.Errorf("failed to get edit entry: %w", err)
+			}
+		}
+
+		if len(editEntry.Result.OutputImages) == 0 {
+			return errors.New("no output images in edit entry")
+		}
+
+		sourceOutput = editEntry.Result.OutputImages[0]
+		sourceImagePath = history.GetEditOutputPath(entryDir, editEntry.ID, sourceOutput)
+		sourceType = "edit"
+		sourceEditID = editEntry.ID
+	} else {
+		// Edit from generate output
+		if len(genEntry.Result.OutputImages) == 0 {
+			return errors.New("no output images in history entry")
+		}
+
+		sourceOutput = genEntry.Result.OutputImages[0]
+		sourceImagePath = filepath.Join(entryDir, sourceOutput)
+		sourceType = "generate"
+	}
+
+	// Verify source image exists
+	if _, err := os.Stat(sourceImagePath); err != nil {
+		return fmt.Errorf("source image not found: %s", sourceImagePath)
+	}
+
+	w := cmd.OutOrStdout()
+	_, _ = fmt.Fprintf(w, "Editing from %s: %s\n", sourceType, sourceOutput)
+	_, _ = fmt.Fprintln(w, "")
+
+	// Create edit entry
+	editEntry := history.NewEditEntry()
+	editEntry.Source = history.EditSource{
+		Type:   sourceType,
+		EditID: sourceEditID,
+		Output: sourceOutput,
+	}
+
+	editDir := editEntry.GetEditEntryDir(entryDir)
+
+	// Create edit directory and save prompt
+	if err := os.MkdirAll(editDir, 0o755); err != nil {
+		return fmt.Errorf("failed to create edit directory: %w", err)
+	}
+	if err := editEntry.SavePrompt(entryDir, promptText); err != nil {
+		return fmt.Errorf("failed to save edit prompt: %w", err)
+	}
+
+	// Call Gemini API
+	result := gemini.Generate(context.Background(), cfg.apiKey, gemini.Params{
+		Model:      model,
+		Prompt:     promptText,
+		ImagePaths: []string{sourceImagePath},
+	})
+
+	if result.Error != nil {
+		// Clean up edit directory on failure
+		if err := editEntry.Cleanup(entryDir); err != nil {
+			_, _ = fmt.Fprintf(w, "Warning: failed to clean up edit directory: %v\n", err)
+		}
+		return fmt.Errorf("failed to edit image: %w", result.Error)
+	}
+
+	// Save edited images
+	saved, saveErr := gemini.SaveImages(result.Response, editDir)
+	if saveErr != nil {
+		if err := editEntry.Cleanup(entryDir); err != nil {
+			_, _ = fmt.Fprintf(w, "Warning: failed to clean up edit directory: %v\n", err)
+		}
+		return saveErr
+	}
+
+	// Update entry with results
+	editEntry.Result.Success = true
+	for _, s := range saved {
+		editEntry.Result.OutputImages = append(editEntry.Result.OutputImages, filepath.Base(s))
+	}
+	editEntry.Result.TokenUsage = result.TokenUsage
+
+	if err := editEntry.Save(entryDir); err != nil {
+		_, _ = fmt.Fprintf(w, "Warning: failed to save edit metadata: %v\n", err)
+	}
+
+	// Print output
+	_, _ = fmt.Fprintf(w, "Edit ID: %s\n", editEntry.ID)
+	_, _ = fmt.Fprintln(w, "")
+	_, _ = fmt.Fprintln(w, "Edited files:")
+	for _, s := range saved {
+		_, _ = fmt.Fprintf(w, "  %s\n", filepath.Base(s))
+	}
+
+	gemini.PrintOutput(w, result.Response, model)
+
+	return nil
+}
+
+func resolveEditPrompt(prompt, promptFile string) (string, error) {
+	if prompt != "" && promptFile != "" {
+		return "", errors.New("cannot specify both --prompt and --prompt-file")
+	}
+	if prompt == "" && promptFile == "" {
+		return "", errors.New("specify --prompt or --prompt-file")
+	}
+
+	if promptFile != "" {
+		data, err := os.ReadFile(promptFile)
+		if err != nil {
+			return "", fmt.Errorf("failed to read prompt file: %w", err)
+		}
+		prompt = string(data)
+	}
+
+	prompt = strings.TrimSpace(prompt)
+	if prompt == "" {
+		return "", errors.New("prompt cannot be empty")
+	}
+
+	return prompt, nil
+}
+
+func init() {
+	rootCmd.AddCommand(editCmd)
+
+	editCmd.Flags().StringVar(&editOpts.id, "id", "", "History entry ID to edit")
+	editCmd.Flags().BoolVar(&editOpts.latest, "latest", false, "Use the latest history entry")
+	editCmd.Flags().StringVar(&editOpts.editID, "edit-id", "", "Edit entry ID to edit from")
+	editCmd.Flags().BoolVar(&editOpts.editLatest, "edit-latest", false, "Use the latest edit entry")
+	editCmd.Flags().StringVarP(&editOpts.prompt, "prompt", "p", "", "Edit prompt")
+	editCmd.Flags().StringVarP(&editOpts.promptFile, "prompt-file", "F", "", "Path to edit prompt file")
+
+	editCmd.MarkFlagsMutuallyExclusive("id", "latest")
+	editCmd.MarkFlagsMutuallyExclusive("edit-id", "edit-latest")
+	editCmd.MarkFlagsMutuallyExclusive("prompt", "prompt-file")
+}

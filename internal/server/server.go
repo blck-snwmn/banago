@@ -98,6 +98,7 @@ type EntryInfo struct {
 	Success      bool
 	OutputImages []string
 	ImageCount   int
+	EditCount    int
 }
 
 // handleSubproject shows the history entries of a subproject
@@ -129,12 +130,14 @@ func (s *Server) handleSubproject(w http.ResponseWriter, r *http.Request) {
 
 	var entryInfos []EntryInfo
 	for _, e := range entries {
+		entryDir := filepath.Join(historyDir, e.ID)
 		entryInfos = append(entryInfos, EntryInfo{
 			ID:           e.ID,
 			CreatedAt:    e.CreatedAt,
 			Success:      e.Result.Success,
 			OutputImages: e.Result.OutputImages,
 			ImageCount:   len(e.Result.OutputImages),
+			EditCount:    history.CountEditEntries(entryDir),
 		})
 	}
 
@@ -174,6 +177,17 @@ func (s *Server) handleEntry(w http.ResponseWriter, r *http.Request) {
 	s.renderEntry(w, subproject, id)
 }
 
+// EditInfo contains edit entry information for templates
+type EditInfo struct {
+	ID           string
+	CreatedAt    string
+	Prompt       string
+	SourceType   string
+	SourceOutput string
+	OutputImages []string
+	ImageURLs    []string
+}
+
 func (s *Server) renderEntry(w http.ResponseWriter, subprojectName, entryID string) {
 	subprojectDir := project.GetSubprojectDir(s.projectRoot, subprojectName)
 	historyDir := history.GetHistoryDir(subprojectDir)
@@ -199,6 +213,29 @@ func (s *Server) renderEntry(w http.ResponseWriter, subprojectName, entryID stri
 		inputImageURLs = append(inputImageURLs, fmt.Sprintf("/images/%s/%s/%s", subprojectName, entryID, img))
 	}
 
+	// Get edits
+	var edits []EditInfo
+	editEntries, _ := history.ListEditEntries(entryDir)
+	for _, e := range editEntries {
+		editDir := filepath.Join(history.GetEditsDir(entryDir), e.ID)
+		editPrompt, _ := history.LoadEditPrompt(editDir)
+
+		var editImageURLs []string
+		for _, img := range e.Result.OutputImages {
+			editImageURLs = append(editImageURLs, fmt.Sprintf("/images/%s/%s/edits/%s/%s", subprojectName, entryID, e.ID, img))
+		}
+
+		edits = append(edits, EditInfo{
+			ID:           e.ID,
+			CreatedAt:    e.CreatedAt,
+			Prompt:       editPrompt,
+			SourceType:   e.Source.Type,
+			SourceOutput: e.Source.Output,
+			OutputImages: e.Result.OutputImages,
+			ImageURLs:    editImageURLs,
+		})
+	}
+
 	// Get prev/next entry IDs for navigation
 	prevID, nextID := s.getAdjacentEntryIDs(historyDir, entryID)
 
@@ -208,6 +245,7 @@ func (s *Server) renderEntry(w http.ResponseWriter, subprojectName, entryID stri
 		Prompt         string
 		ImageURLs      []string
 		InputImageURLs []string
+		Edits          []EditInfo
 		PrevEntryID    string
 		NextEntryID    string
 	}{
@@ -216,6 +254,7 @@ func (s *Server) renderEntry(w http.ResponseWriter, subprojectName, entryID stri
 		Prompt:         prompt,
 		ImageURLs:      imageURLs,
 		InputImageURLs: inputImageURLs,
+		Edits:          edits,
 		PrevEntryID:    prevID,
 		NextEntryID:    nextID,
 	}
@@ -255,19 +294,18 @@ func (s *Server) getAdjacentEntryIDs(historyDir, currentID string) (prevID, next
 
 // handleImage serves image files from history
 func (s *Server) handleImage(w http.ResponseWriter, r *http.Request) {
-	// /images/{subproject}/{entryID}/{filename}
-	path := r.URL.Path[len("/images/"):]
+	// /images/{subproject}/{...path}
+	path := strings.TrimSuffix(r.URL.Path[len("/images/"):], "/")
+	parts := strings.Split(path, "/")
 
-	parts := strings.SplitN(path, "/", 3)
-	if len(parts) != 3 || parts[0] == "" || parts[1] == "" || parts[2] == "" {
+	if len(parts) < 3 {
 		http.NotFound(w, r)
 		return
 	}
-	subproject, entryID, filename := parts[0], parts[1], parts[2]
 
-	subprojectDir := project.GetSubprojectDir(s.projectRoot, subproject)
+	subprojectDir := project.GetSubprojectDir(s.projectRoot, parts[0])
 	historyDir := history.GetHistoryDir(subprojectDir)
-	imagePath := filepath.Join(historyDir, entryID, filename)
+	imagePath := filepath.Join(historyDir, filepath.Join(parts[1:]...))
 
 	// Security: ensure the path is within the history directory
 	absImagePath, err := filepath.Abs(imagePath)
