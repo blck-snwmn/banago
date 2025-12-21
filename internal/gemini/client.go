@@ -31,10 +31,25 @@ type Result struct {
 	TokenUsage TokenUsage
 }
 
+// Generator defines the interface for image generation
+type Generator interface {
+	Generate(ctx context.Context, params Params) *Result
+}
+
+// Client implements Generator and calls the real Gemini API
+type Client struct {
+	apiKey string
+}
+
+// NewClient creates a new Client with the given API key
+func NewClient(apiKey string) *Client {
+	return &Client{apiKey: apiKey}
+}
+
 // Generate calls the Gemini API to generate images
-func Generate(ctx context.Context, apiKey string, params Params) *Result {
+func (c *Client) Generate(ctx context.Context, params Params) *Result {
 	client, err := genai.NewClient(ctx, &genai.ClientConfig{
-		APIKey:  apiKey,
+		APIKey:  c.apiKey,
 		Backend: genai.BackendGeminiAPI,
 	})
 	if err != nil {
@@ -80,6 +95,11 @@ func Generate(ctx context.Context, apiKey string, params Params) *Result {
 	}
 
 	return result
+}
+
+// Generate calls the Gemini API to generate images (backward compatible wrapper)
+func Generate(ctx context.Context, apiKey string, params Params) *Result {
+	return NewClient(apiKey).Generate(ctx, params)
 }
 
 // PrintOutput prints the generation result to the writer

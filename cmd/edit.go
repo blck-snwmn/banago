@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/blck-snwmn/banago/internal/config"
-	"github.com/blck-snwmn/banago/internal/gemini"
+	"github.com/blck-snwmn/banago/internal/generation"
 	"github.com/blck-snwmn/banago/internal/history"
 	"github.com/blck-snwmn/banago/internal/project"
 	"github.com/spf13/cobra"
@@ -155,70 +155,21 @@ func runEdit(cmd *cobra.Command, _ []string) error {
 	_, _ = fmt.Fprintf(w, "Editing from %s: %s\n", sourceType, sourceOutput)
 	_, _ = fmt.Fprintln(w, "")
 
-	// Create edit entry
-	editEntry := history.NewEditEntry()
-	editEntry.Source = history.EditSource{
-		Type:   sourceType,
-		EditID: sourceEditID,
-		Output: sourceOutput,
+	// Build edit spec
+	spec := generation.EditSpec{
+		Model:           model,
+		Prompt:          promptText,
+		SourceImagePath: sourceImagePath,
+		HistoryDir:      historyDir,
+		EntryID:         genEntry.ID,
+		SourceType:      sourceType,
+		SourceEditID:    sourceEditID,
+		SourceOutput:    sourceOutput,
 	}
 
-	editDir := editEntry.GetEditEntryDir(entryDir)
-
-	// Create edit directory and save prompt
-	if err := os.MkdirAll(editDir, 0o755); err != nil {
-		return fmt.Errorf("failed to create edit directory: %w", err)
-	}
-	if err := editEntry.SavePrompt(entryDir, promptText); err != nil {
-		return fmt.Errorf("failed to save edit prompt: %w", err)
-	}
-
-	// Call Gemini API
-	result := gemini.Generate(context.Background(), cfg.apiKey, gemini.Params{
-		Model:      model,
-		Prompt:     promptText,
-		ImagePaths: []string{sourceImagePath},
-	})
-
-	if result.Error != nil {
-		// Clean up edit directory on failure
-		if err := editEntry.Cleanup(entryDir); err != nil {
-			_, _ = fmt.Fprintf(w, "Warning: failed to clean up edit directory: %v\n", err)
-		}
-		return fmt.Errorf("failed to edit image: %w", result.Error)
-	}
-
-	// Save edited images
-	saved, saveErr := gemini.SaveImages(result.Response, editDir)
-	if saveErr != nil {
-		if err := editEntry.Cleanup(entryDir); err != nil {
-			_, _ = fmt.Fprintf(w, "Warning: failed to clean up edit directory: %v\n", err)
-		}
-		return saveErr
-	}
-
-	// Update entry with results
-	editEntry.Result.Success = true
-	for _, s := range saved {
-		editEntry.Result.OutputImages = append(editEntry.Result.OutputImages, filepath.Base(s))
-	}
-	editEntry.Result.TokenUsage = result.TokenUsage
-
-	if err := editEntry.Save(entryDir); err != nil {
-		_, _ = fmt.Fprintf(w, "Warning: failed to save edit metadata: %v\n", err)
-	}
-
-	// Print output
-	_, _ = fmt.Fprintf(w, "Edit ID: %s\n", editEntry.ID)
-	_, _ = fmt.Fprintln(w, "")
-	_, _ = fmt.Fprintln(w, "Edited files:")
-	for _, s := range saved {
-		_, _ = fmt.Fprintf(w, "  %s\n", filepath.Base(s))
-	}
-
-	gemini.PrintOutput(w, result.Response, model)
-
-	return nil
+	// Run edit
+	_, err = generation.Edit(context.Background(), cfg.apiKey, spec, w)
+	return err
 }
 
 func resolveEditPrompt(prompt, promptFile string) (string, error) {

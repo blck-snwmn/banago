@@ -17,8 +17,24 @@ type Result struct {
 	OutputImages []string
 }
 
+// EditResult contains the output of an edit operation.
+type EditResult struct {
+	EditID       string
+	OutputImages []string
+}
+
+// Service handles image generation with dependency injection support.
+type Service struct {
+	generator gemini.Generator
+}
+
+// NewService creates a new Service with the given generator.
+func NewService(generator gemini.Generator) *Service {
+	return &Service{generator: generator}
+}
+
 // Run executes the generation workflow and saves the result to history.
-func Run(ctx context.Context, apiKey string, spec Spec, historyDir string, w io.Writer) (*Result, error) {
+func (s *Service) Run(ctx context.Context, spec Spec, historyDir string, w io.Writer) (*Result, error) {
 	// Validate inputs before any work
 	if err := validateSpec(spec); err != nil {
 		return nil, err
@@ -53,7 +69,7 @@ func Run(ctx context.Context, apiKey string, spec Spec, historyDir string, w io.
 	}
 
 	// Call Gemini API
-	result := gemini.Generate(ctx, apiKey, gemini.Params{
+	result := s.generator.Generate(ctx, gemini.Params{
 		Model:       spec.Model,
 		Prompt:      spec.Prompt,
 		ImagePaths:  spec.ImagePaths,
@@ -104,4 +120,86 @@ func Run(ctx context.Context, apiKey string, spec Spec, historyDir string, w io.
 		EntryID:      entry.ID,
 		OutputImages: entry.Result.OutputImages,
 	}, nil
+}
+
+// Run executes the generation workflow (backward compatible wrapper).
+func Run(ctx context.Context, apiKey string, spec Spec, historyDir string, w io.Writer) (*Result, error) {
+	return NewService(gemini.NewClient(apiKey)).Run(ctx, spec, historyDir, w)
+}
+
+// Edit executes an edit operation on an existing image.
+func (s *Service) Edit(ctx context.Context, spec EditSpec, w io.Writer) (*EditResult, error) {
+	// Create edit entry
+	editEntry := history.NewEditEntry()
+	editEntry.Source = history.EditSource{
+		Type:   spec.SourceType,
+		EditID: spec.SourceEditID,
+		Output: spec.SourceOutput,
+	}
+
+	entryDir := filepath.Join(spec.HistoryDir, spec.EntryID)
+	editDir := editEntry.GetEditEntryDir(entryDir)
+
+	// Create edit directory and save prompt
+	if err := os.MkdirAll(editDir, 0o755); err != nil {
+		return nil, fmt.Errorf("failed to create edit directory: %w", err)
+	}
+	if err := editEntry.SavePrompt(entryDir, spec.Prompt); err != nil {
+		return nil, fmt.Errorf("failed to save edit prompt: %w", err)
+	}
+
+	// Call Gemini API
+	result := s.generator.Generate(ctx, gemini.Params{
+		Model:      spec.Model,
+		Prompt:     spec.Prompt,
+		ImagePaths: []string{spec.SourceImagePath},
+	})
+
+	if result.Error != nil {
+		// Clean up edit directory on failure
+		if err := editEntry.Cleanup(entryDir); err != nil {
+			_, _ = fmt.Fprintf(w, "Warning: failed to clean up edit directory: %v\n", err)
+		}
+		return nil, fmt.Errorf("failed to edit image: %w", result.Error)
+	}
+
+	// Save edited images
+	saved, saveErr := gemini.SaveImages(result.Response, editDir)
+	if saveErr != nil {
+		if err := editEntry.Cleanup(entryDir); err != nil {
+			_, _ = fmt.Fprintf(w, "Warning: failed to clean up edit directory: %v\n", err)
+		}
+		return nil, saveErr
+	}
+
+	// Update entry with results
+	editEntry.Result.Success = true
+	for _, savedPath := range saved {
+		editEntry.Result.OutputImages = append(editEntry.Result.OutputImages, filepath.Base(savedPath))
+	}
+	editEntry.Result.TokenUsage = result.TokenUsage
+
+	if err := editEntry.Save(entryDir); err != nil {
+		_, _ = fmt.Fprintf(w, "Warning: failed to save edit metadata: %v\n", err)
+	}
+
+	// Print output
+	_, _ = fmt.Fprintf(w, "Edit ID: %s\n", editEntry.ID)
+	_, _ = fmt.Fprintln(w, "")
+	_, _ = fmt.Fprintln(w, "Edited files:")
+	for _, savedPath := range saved {
+		_, _ = fmt.Fprintf(w, "  %s\n", filepath.Base(savedPath))
+	}
+
+	gemini.PrintOutput(w, result.Response, spec.Model)
+
+	return &EditResult{
+		EditID:       editEntry.ID,
+		OutputImages: editEntry.Result.OutputImages,
+	}, nil
+}
+
+// Edit executes an edit operation (backward compatible wrapper).
+func Edit(ctx context.Context, apiKey string, spec EditSpec, w io.Writer) (*EditResult, error) {
+	return NewService(gemini.NewClient(apiKey)).Edit(ctx, spec, w)
 }

@@ -220,3 +220,250 @@ func TestListSubprojects(t *testing.T) {
 		}
 	})
 }
+
+func TestInitProject(t *testing.T) {
+	t.Parallel()
+
+	t.Run("initializes project", func(t *testing.T) {
+		t.Parallel()
+		dir := t.TempDir()
+
+		err := InitProject(dir, "test-project", false)
+		if err != nil {
+			t.Fatalf("InitProject() error = %v", err)
+		}
+
+		// Verify project config exists
+		if !config.ProjectConfigExists(dir) {
+			t.Error("project config should exist")
+		}
+
+		// Verify directories exist
+		if _, err := os.Stat(filepath.Join(dir, charactersDir)); os.IsNotExist(err) {
+			t.Error("characters directory should exist")
+		}
+		if _, err := os.Stat(filepath.Join(dir, subprojectsDir)); os.IsNotExist(err) {
+			t.Error("subprojects directory should exist")
+		}
+
+		// Verify AI guides exist
+		for _, filename := range []string{"CLAUDE.md", "GEMINI.md", "AGENTS.md"} {
+			if _, err := os.Stat(filepath.Join(dir, filename)); os.IsNotExist(err) {
+				t.Errorf("%s should exist", filename)
+			}
+		}
+	})
+
+	t.Run("fails if already initialized", func(t *testing.T) {
+		t.Parallel()
+		dir := t.TempDir()
+
+		// Initialize first time
+		if err := InitProject(dir, "test-project", false); err != nil {
+			t.Fatalf("first InitProject() error = %v", err)
+		}
+
+		// Try to initialize again
+		err := InitProject(dir, "test-project", false)
+		if !errors.Is(err, ErrAlreadyInitialized) {
+			t.Errorf("InitProject() error = %v, want %v", err, ErrAlreadyInitialized)
+		}
+	})
+
+	t.Run("force overwrites existing", func(t *testing.T) {
+		t.Parallel()
+		dir := t.TempDir()
+
+		// Initialize first time
+		if err := InitProject(dir, "old-name", false); err != nil {
+			t.Fatalf("first InitProject() error = %v", err)
+		}
+
+		// Initialize again with force
+		err := InitProject(dir, "new-name", true)
+		if err != nil {
+			t.Fatalf("InitProject() with force error = %v", err)
+		}
+
+		// Verify new name
+		cfg, err := config.LoadProjectConfig(dir)
+		if err != nil {
+			t.Fatalf("LoadProjectConfig() error = %v", err)
+		}
+		if cfg.Name != "new-name" {
+			t.Errorf("config.Name = %q, want %q", cfg.Name, "new-name")
+		}
+	})
+}
+
+func TestCreateSubproject(t *testing.T) {
+	t.Parallel()
+
+	t.Run("creates subproject", func(t *testing.T) {
+		t.Parallel()
+		projectRoot := setupTestProject(t)
+
+		err := CreateSubproject(projectRoot, "my-sub", "A test subproject")
+		if err != nil {
+			t.Fatalf("CreateSubproject() error = %v", err)
+		}
+
+		subprojectDir := GetSubprojectDir(projectRoot, "my-sub")
+
+		// Verify config exists
+		if !config.SubprojectConfigExists(subprojectDir) {
+			t.Error("subproject config should exist")
+		}
+
+		// Verify directories exist
+		if _, err := os.Stat(GetInputsDir(subprojectDir)); os.IsNotExist(err) {
+			t.Error("inputs directory should exist")
+		}
+		if _, err := os.Stat(filepath.Join(subprojectDir, "history")); os.IsNotExist(err) {
+			t.Error("history directory should exist")
+		}
+
+		// Verify context.md exists
+		if _, err := os.Stat(filepath.Join(subprojectDir, "context.md")); os.IsNotExist(err) {
+			t.Error("context.md should exist")
+		}
+
+		// Verify description is set
+		cfg, err := config.LoadSubprojectConfig(subprojectDir)
+		if err != nil {
+			t.Fatalf("LoadSubprojectConfig() error = %v", err)
+		}
+		if cfg.Description != "A test subproject" {
+			t.Errorf("config.Description = %q, want %q", cfg.Description, "A test subproject")
+		}
+	})
+
+	t.Run("fails if subproject exists", func(t *testing.T) {
+		t.Parallel()
+		projectRoot := setupTestProject(t)
+
+		// Create first time
+		if err := CreateSubproject(projectRoot, "existing", ""); err != nil {
+			t.Fatalf("first CreateSubproject() error = %v", err)
+		}
+
+		// Try to create again
+		err := CreateSubproject(projectRoot, "existing", "")
+		if err == nil {
+			t.Error("CreateSubproject() should fail for existing subproject")
+		}
+	})
+}
+
+func TestListSubprojectInfos(t *testing.T) {
+	t.Parallel()
+
+	t.Run("returns subproject infos", func(t *testing.T) {
+		t.Parallel()
+		projectRoot := setupTestProject(t)
+
+		// Create subprojects with descriptions
+		if err := CreateSubproject(projectRoot, "sub1", "First subproject"); err != nil {
+			t.Fatalf("CreateSubproject() error = %v", err)
+		}
+		if err := CreateSubproject(projectRoot, "sub2", "Second subproject"); err != nil {
+			t.Fatalf("CreateSubproject() error = %v", err)
+		}
+
+		infos, err := ListSubprojectInfos(projectRoot)
+		if err != nil {
+			t.Fatalf("ListSubprojectInfos() error = %v", err)
+		}
+		if len(infos) != 2 {
+			t.Fatalf("ListSubprojectInfos() returned %d items, want 2", len(infos))
+		}
+
+		// Check that descriptions are included
+		foundSub1 := false
+		for _, info := range infos {
+			if info.Name == "sub1" && info.Description == "First subproject" {
+				foundSub1 = true
+			}
+		}
+		if !foundSub1 {
+			t.Error("sub1 with description not found in infos")
+		}
+	})
+
+	t.Run("returns empty for no subprojects", func(t *testing.T) {
+		t.Parallel()
+		projectRoot := setupTestProject(t)
+
+		infos, err := ListSubprojectInfos(projectRoot)
+		if err != nil {
+			t.Fatalf("ListSubprojectInfos() error = %v", err)
+		}
+		if len(infos) != 0 {
+			t.Errorf("ListSubprojectInfos() returned %d items, want 0", len(infos))
+		}
+	})
+}
+
+// Path function tests
+
+func TestGetSubprojectsDir(t *testing.T) {
+	t.Parallel()
+
+	projectRoot := "/path/to/project"
+	expected := "/path/to/project/subprojects"
+	got := GetSubprojectsDir(projectRoot)
+
+	if got != expected {
+		t.Errorf("GetSubprojectsDir() = %q, want %q", got, expected)
+	}
+}
+
+func TestGetSubprojectDir(t *testing.T) {
+	t.Parallel()
+
+	projectRoot := "/path/to/project"
+	name := "my-sub"
+	expected := "/path/to/project/subprojects/my-sub"
+	got := GetSubprojectDir(projectRoot, name)
+
+	if got != expected {
+		t.Errorf("GetSubprojectDir() = %q, want %q", got, expected)
+	}
+}
+
+func TestGetCharactersDir(t *testing.T) {
+	t.Parallel()
+
+	projectRoot := "/path/to/project"
+	expected := "/path/to/project/characters"
+	got := GetCharactersDir(projectRoot)
+
+	if got != expected {
+		t.Errorf("GetCharactersDir() = %q, want %q", got, expected)
+	}
+}
+
+func TestGetCharacterPath(t *testing.T) {
+	t.Parallel()
+
+	projectRoot := "/path/to/project"
+	characterFile := "character.md"
+	expected := "/path/to/project/characters/character.md"
+	got := GetCharacterPath(projectRoot, characterFile)
+
+	if got != expected {
+		t.Errorf("GetCharacterPath() = %q, want %q", got, expected)
+	}
+}
+
+func TestGetInputsDir(t *testing.T) {
+	t.Parallel()
+
+	subprojectDir := "/path/to/project/subprojects/my-sub"
+	expected := "/path/to/project/subprojects/my-sub/inputs"
+	got := GetInputsDir(subprojectDir)
+
+	if got != expected {
+		t.Errorf("GetInputsDir() = %q, want %q", got, expected)
+	}
+}
