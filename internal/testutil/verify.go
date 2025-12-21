@@ -65,13 +65,6 @@ func VerifySubprojectStructure(t *testing.T, subprojectDir string) {
 	assert.DirExists(t, filepath.Join(subprojectDir, "history"), "history directory should exist")
 }
 
-// AssertContains checks that output contains the expected substring.
-// Deprecated: Use assert.Contains directly.
-func AssertContains(t *testing.T, output, expected string) {
-	t.Helper()
-	assert.Contains(t, output, expected)
-}
-
 // AssertNoError fails the test if err is not nil.
 // Deprecated: Use require.NoError directly.
 func AssertNoError(t *testing.T, err error) {
