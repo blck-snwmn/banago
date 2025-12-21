@@ -134,7 +134,7 @@ func Run(ctx context.Context, apiKey string, spec Spec, historyDir string, w io.
 }
 
 // Edit executes an edit operation on an existing image.
-func (s *Service) Edit(ctx context.Context, spec EditSpec, w io.Writer) (*EditResult, error) {
+func (s *Service) Edit(ctx context.Context, spec EditSpec, historyDir string, w io.Writer) (*EditResult, error) {
 	// Create edit entry
 	editEntry := history.NewEditEntry()
 	editEntry.Source = history.EditSource{
@@ -143,7 +143,7 @@ func (s *Service) Edit(ctx context.Context, spec EditSpec, w io.Writer) (*EditRe
 		Output: spec.SourceOutput,
 	}
 
-	entryDir := filepath.Join(spec.HistoryDir, spec.EntryID)
+	entryDir := filepath.Join(historyDir, spec.EntryID)
 	editDir := editEntry.GetEditEntryDir(entryDir)
 
 	// Create edit directory and save prompt
@@ -206,6 +206,6 @@ func (s *Service) Edit(ctx context.Context, spec EditSpec, w io.Writer) (*EditRe
 }
 
 // Edit executes an edit operation (backward compatible wrapper).
-func Edit(ctx context.Context, apiKey string, spec EditSpec, w io.Writer) (*EditResult, error) {
-	return NewService(gemini.NewClient(apiKey)).Edit(ctx, spec, w)
+func Edit(ctx context.Context, apiKey string, spec EditSpec, historyDir string, w io.Writer) (*EditResult, error) {
+	return NewService(gemini.NewClient(apiKey)).Edit(ctx, spec, historyDir, w)
 }

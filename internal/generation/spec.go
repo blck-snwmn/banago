@@ -26,8 +26,7 @@ type EditSpec struct {
 	SourceImagePath string
 
 	// History context
-	HistoryDir string
-	EntryID    string // The generate entry ID
+	EntryID string // The generate entry ID
 
 	// Source information for tracking
 	SourceType   string // "generate" or "edit"

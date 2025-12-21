@@ -160,7 +160,6 @@ func runEdit(cmd *cobra.Command, _ []string) error {
 		Model:           model,
 		Prompt:          promptText,
 		SourceImagePath: sourceImagePath,
-		HistoryDir:      historyDir,
 		EntryID:         genEntry.ID,
 		SourceType:      sourceType,
 		SourceEditID:    sourceEditID,
@@ -168,7 +167,7 @@ func runEdit(cmd *cobra.Command, _ []string) error {
 	}
 
 	// Run edit
-	_, err = generation.Edit(context.Background(), cfg.apiKey, spec, w)
+	_, err = generation.Edit(context.Background(), cfg.apiKey, spec, historyDir, w)
 	return err
 }
 

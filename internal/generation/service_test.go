@@ -293,11 +293,10 @@ func TestScenario_GenerateAndEdit(t *testing.T) {
 		Model:           "test-model",
 		Prompt:          "edit prompt",
 		SourceImagePath: sourceImagePath,
-		HistoryDir:      historyDir,
 		EntryID:         genResult.EntryID,
 		SourceType:      "generate",
 		SourceOutput:    genResult.OutputImages[0],
-	}, &editBuf)
+	}, historyDir, &editBuf)
 	require.NoError(t, err)
 	assert.NotEmpty(t, editResult.EditID)
 	assert.Len(t, editResult.OutputImages, 1)
@@ -345,11 +344,10 @@ func TestScenario_EditChain(t *testing.T) {
 		Model:           "test-model",
 		Prompt:          "first edit",
 		SourceImagePath: sourceImagePath,
-		HistoryDir:      historyDir,
 		EntryID:         genResult.EntryID,
 		SourceType:      "generate",
 		SourceOutput:    genResult.OutputImages[0],
-	}, &edit1Buf)
+	}, historyDir, &edit1Buf)
 	require.NoError(t, err)
 
 	// Get first edit output path
@@ -361,12 +359,11 @@ func TestScenario_EditChain(t *testing.T) {
 		Model:           "test-model",
 		Prompt:          "second edit",
 		SourceImagePath: edit1OutputPath,
-		HistoryDir:      historyDir,
 		EntryID:         genResult.EntryID,
 		SourceType:      "edit",
 		SourceEditID:    edit1Result.EditID,
 		SourceOutput:    edit1Result.OutputImages[0],
-	}, &edit2Buf)
+	}, historyDir, &edit2Buf)
 	require.NoError(t, err)
 
 	// Verify all IDs are different
