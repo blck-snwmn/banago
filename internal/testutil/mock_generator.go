@@ -13,10 +13,10 @@ type MockGenerator struct {
 	mu sync.Mutex
 
 	// Configuration fields
-	ResponseImages [][]byte         // Image data to return
-	ResponseMIME   string           // MIME type for response images (default: image/png)
+	ResponseImages [][]byte          // Image data to return
+	ResponseMIME   string            // MIME type for response images (default: image/png)
 	TokenUsage     gemini.TokenUsage // Token usage to return
-	Error          error            // Error to return (if set, overrides success response)
+	Error          error             // Error to return (if set, overrides success response)
 
 	// Recording fields
 	Calls []gemini.Params // Records all Generate calls

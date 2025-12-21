@@ -30,10 +30,10 @@ type Generation struct {
 
 // Result contains generation results
 type Result struct {
-	Success      bool             `yaml:"success"`
-	OutputImages []string         `yaml:"output_images,omitempty"`
+	Success      bool              `yaml:"success"`
+	OutputImages []string          `yaml:"output_images,omitempty"`
 	TokenUsage   gemini.TokenUsage `yaml:"token_usage,omitempty"`
-	ErrorMessage string           `yaml:"error_message,omitempty"`
+	ErrorMessage string            `yaml:"error_message,omitempty"`
 }
 
 const (

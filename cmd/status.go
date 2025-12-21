@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	uuidShortLen = 8  // Length for shortened UUID display (e.g., "01234567...")
+	uuidShortLen  = 8  // Length for shortened UUID display (e.g., "01234567...")
 	datePrefixLen = 10 // Length for date prefix from RFC3339 (YYYY-MM-DD)
 )
 

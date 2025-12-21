@@ -13,11 +13,11 @@ import (
 
 // EditEntry represents an edit entry (edit-meta.yaml)
 type EditEntry struct {
-	ID        string     `yaml:"id"`
-	CreatedAt string     `yaml:"created_at"`
-	Source    EditSource `yaml:"source"`
-	PromptFile string    `yaml:"prompt_file"`
-	Result    Result     `yaml:"result"`
+	ID         string     `yaml:"id"`
+	CreatedAt  string     `yaml:"created_at"`
+	Source     EditSource `yaml:"source"`
+	PromptFile string     `yaml:"prompt_file"`
+	Result     Result     `yaml:"result"`
 }
 
 // EditSource contains information about the source of the edit
