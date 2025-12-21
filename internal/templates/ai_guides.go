@@ -133,6 +133,7 @@ banago edit --latest --edit-latest -p "Further adjust the shadows"
 | ` + "`banago edit --latest -p \"...\"`" + ` | Edit latest generated image |
 | ` + "`banago edit --latest --edit-latest -p \"...\"`" + ` | Edit latest edit result |
 | ` + "`banago edit --id <uuid> -p \"...\"`" + ` | Edit specific history entry |
+| ` + "`banago serve`" + ` | Browse generated images in browser |
 
 ## Project Structure
 

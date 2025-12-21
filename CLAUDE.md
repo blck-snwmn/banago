@@ -101,6 +101,43 @@ Show generation history of the current subproject.
 Flags:
 - `--limit` - Number of entries to show (default: 10)
 
+### `banago edit`
+Edit a generated image using Gemini's image editing capabilities.
+
+Uses an existing output image as input and applies the edit prompt.
+Results are saved in the `edits/` subdirectory of the history entry.
+
+Flags:
+- `--id` - History entry ID to edit
+- `--latest` - Use the latest history entry
+- `--edit-id` - Edit entry ID to edit from (for chained edits)
+- `--edit-latest` - Use the latest edit entry (for chained edits)
+- `-p, --prompt` - Edit prompt
+- `-F, --prompt-file` - Path to edit prompt file
+
+Examples:
+```bash
+banago edit --latest -p "Change the button color to red"
+banago edit --latest --edit-latest -p "Further adjust the background"
+banago edit --id <uuid> -p "Fix the background"
+```
+
+### `banago serve`
+Start a web server to browse generated images.
+
+Flags:
+- `--port` - Port to listen on (default: 8080)
+
+### `banago migrate`
+Migrate history entries from old format (v1) to new format (v2).
+
+This command:
+- Copies input images from `inputs/` to each history entry directory
+- Removes `context.md` and `character.md` from history entries
+- Updates the project version to 2
+
+The migration is idempotent - running it multiple times is safe.
+
 ## Architecture
 
 ### CLI Layer (`cmd/`)
@@ -136,6 +173,15 @@ Cobra-based CLI. See "banago CLI Commands" section for command details.
         ├── context.md    # Scene context
         ├── inputs/       # Reference images
         └── history/      # UUID v7 directories
+            └── <uuid>/
+                ├── prompt.txt    # Prompt snapshot
+                ├── meta.yaml     # Metadata
+                ├── output_*.png  # Generated images
+                └── edits/        # Edit history
+                    └── <edit-uuid>/
+                        ├── edit-prompt.txt  # Edit prompt
+                        ├── edit-meta.yaml   # Edit metadata
+                        └── output_*.png     # Edited images
 ```
 
 ## API Key
