@@ -26,6 +26,8 @@ type Generation struct {
 	InputImages   []string `yaml:"input_images"`
 	ContextFile   string   `yaml:"context_file,omitempty"`
 	CharacterFile string   `yaml:"character_file,omitempty"`
+	AspectRatio   string   `yaml:"aspect_ratio,omitempty"`
+	ImageSize     string   `yaml:"image_size,omitempty"`
 }
 
 // Result contains generation results

@@ -13,11 +13,18 @@ import (
 
 // EditEntry represents an edit entry (edit-meta.yaml)
 type EditEntry struct {
-	ID         string     `yaml:"id"`
-	CreatedAt  string     `yaml:"created_at"`
-	Source     EditSource `yaml:"source"`
-	PromptFile string     `yaml:"prompt_file"`
-	Result     Result     `yaml:"result"`
+	ID         string         `yaml:"id"`
+	CreatedAt  string         `yaml:"created_at"`
+	Source     EditSource     `yaml:"source"`
+	Generation EditGeneration `yaml:"generation"`
+	Result     Result         `yaml:"result"`
+}
+
+// EditGeneration contains edit generation parameters
+type EditGeneration struct {
+	PromptFile  string `yaml:"prompt_file"`
+	AspectRatio string `yaml:"aspect_ratio,omitempty"`
+	ImageSize   string `yaml:"image_size,omitempty"`
 }
 
 // EditSource contains information about the source of the edit
@@ -37,9 +44,11 @@ const (
 func NewEditEntry() *EditEntry {
 	id := uuid.Must(uuid.NewV7())
 	return &EditEntry{
-		ID:         id.String(),
-		CreatedAt:  time.Now().UTC().Format(time.RFC3339),
-		PromptFile: EditPromptFile,
+		ID:        id.String(),
+		CreatedAt: time.Now().UTC().Format(time.RFC3339),
+		Generation: EditGeneration{
+			PromptFile: EditPromptFile,
+		},
 	}
 }
 

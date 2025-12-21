@@ -58,6 +58,8 @@ func (s *Service) Run(ctx context.Context, spec Spec, historyDir string, w io.Wr
 
 	entry.Generation.PromptFile = history.PromptFile
 	entry.Generation.InputImages = spec.InputImageNames
+	entry.Generation.AspectRatio = spec.AspectRatio
+	entry.Generation.ImageSize = spec.ImageSize
 
 	entryDir := entry.GetEntryDir(historyDir)
 
@@ -142,6 +144,8 @@ func (s *Service) Edit(ctx context.Context, spec EditSpec, historyDir string, w 
 		EditID: spec.SourceEditID,
 		Output: spec.SourceOutput,
 	}
+	editEntry.Generation.AspectRatio = spec.AspectRatio
+	editEntry.Generation.ImageSize = spec.ImageSize
 
 	entryDir := filepath.Join(historyDir, spec.EntryID)
 	editDir := editEntry.GetEditEntryDir(entryDir)
@@ -156,9 +160,11 @@ func (s *Service) Edit(ctx context.Context, spec EditSpec, historyDir string, w 
 
 	// Call Gemini API
 	result := s.generator.Generate(ctx, gemini.Params{
-		Model:      spec.Model,
-		Prompt:     spec.Prompt,
-		ImagePaths: []string{spec.SourceImagePath},
+		Model:       spec.Model,
+		Prompt:      spec.Prompt,
+		ImagePaths:  []string{spec.SourceImagePath},
+		AspectRatio: spec.AspectRatio,
+		ImageSize:   spec.ImageSize,
 	})
 
 	if result.Error != nil {

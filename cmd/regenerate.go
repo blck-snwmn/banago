@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -17,6 +18,8 @@ import (
 type regenerateOptions struct {
 	id     string
 	latest bool
+	aspect string
+	size   string
 }
 
 var regenOpts regenerateOptions
@@ -111,13 +114,17 @@ Examples:
 			return errors.New("no input images found in history entry. Run 'banago migrate' first")
 		}
 
+		// Resolve aspect ratio and image size: flag > history > config
+		aspect := cmp.Or(regenOpts.aspect, sourceEntry.Generation.AspectRatio, subprojectCfg.AspectRatio)
+		size := cmp.Or(regenOpts.size, sourceEntry.Generation.ImageSize, subprojectCfg.ImageSize)
+
 		// Build generation spec
 		spec := generation.Spec{
 			Model:           model,
 			Prompt:          promptText,
 			ImagePaths:      imagePaths,
-			AspectRatio:     subprojectCfg.AspectRatio,
-			ImageSize:       subprojectCfg.ImageSize,
+			AspectRatio:     aspect,
+			ImageSize:       size,
 			InputImageNames: sourceEntry.Generation.InputImages,
 			SourceEntryID:   sourceEntry.ID,
 		}
@@ -133,6 +140,8 @@ func init() {
 
 	regenerateCmd.Flags().StringVar(&regenOpts.id, "id", "", "History entry ID to regenerate from")
 	regenerateCmd.Flags().BoolVar(&regenOpts.latest, "latest", false, "Use the latest history entry")
+	regenerateCmd.Flags().StringVar(&regenOpts.aspect, "aspect", "", "Output image aspect ratio (overrides history/config)")
+	regenerateCmd.Flags().StringVar(&regenOpts.size, "size", "", "Output image size (overrides history/config)")
 
 	regenerateCmd.MarkFlagsMutuallyExclusive("id", "latest")
 }

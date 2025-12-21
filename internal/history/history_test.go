@@ -380,8 +380,8 @@ func TestNewEditEntry(t *testing.T) {
 	if len(entry.ID) != 36 {
 		t.Errorf("ID length = %d, want 36", len(entry.ID))
 	}
-	if entry.PromptFile != EditPromptFile {
-		t.Errorf("PromptFile = %q, want %q", entry.PromptFile, EditPromptFile)
+	if entry.Generation.PromptFile != EditPromptFile {
+		t.Errorf("PromptFile = %q, want %q", entry.Generation.PromptFile, EditPromptFile)
 	}
 }
 

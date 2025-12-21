@@ -19,8 +19,10 @@ type Spec struct {
 // EditSpec holds all information needed for editing an existing image.
 type EditSpec struct {
 	// Generation parameters
-	Model  string
-	Prompt string
+	Model       string
+	Prompt      string
+	AspectRatio string
+	ImageSize   string
 
 	// Source image information
 	SourceImagePath string

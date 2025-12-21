@@ -94,6 +94,8 @@ Regenerate images from a history entry. Uses the same prompt and input images.
 Flags:
 - `--latest` - Use the latest history entry
 - `--id` - Use a specific history entry UUID
+- `--aspect` - Override aspect ratio (priority: flag > history > config)
+- `--size` - Override image size (priority: flag > history > config)
 
 ### `banago history`
 Show generation history of the current subproject.
@@ -114,6 +116,8 @@ Flags:
 - `--edit-latest` - Use the latest edit entry (for chained edits)
 - `-p, --prompt` - Edit prompt
 - `-F, --prompt-file` - Path to edit prompt file
+- `--aspect` - Override aspect ratio (priority: flag > edit history > generate history > config)
+- `--size` - Override image size (priority: flag > edit history > generate history > config)
 
 Examples:
 ```bash
@@ -175,12 +179,12 @@ Cobra-based CLI. See "banago CLI Commands" section for command details.
         └── history/      # UUID v7 directories
             └── <uuid>/
                 ├── prompt.txt    # Prompt snapshot
-                ├── meta.yaml     # Metadata
+                ├── meta.yaml     # Metadata (includes aspect_ratio, image_size)
                 ├── output_*.png  # Generated images
                 └── edits/        # Edit history
                     └── <edit-uuid>/
                         ├── edit-prompt.txt  # Edit prompt
-                        ├── edit-meta.yaml   # Edit metadata
+                        ├── edit-meta.yaml   # Edit metadata (includes aspect_ratio, image_size)
                         └── output_*.png     # Edited images
 ```
 

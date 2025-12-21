@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -22,6 +23,8 @@ type editOptions struct {
 	editLatest bool
 	prompt     string
 	promptFile string
+	aspect     string
+	size       string
 }
 
 var editOpts editOptions
@@ -88,6 +91,10 @@ func runEdit(cmd *cobra.Command, _ []string) error {
 	}
 
 	subprojectDir := project.GetSubprojectDir(projectRoot, subprojectName)
+	subprojectCfg, err := config.LoadSubprojectConfig(subprojectDir)
+	if err != nil {
+		return fmt.Errorf("failed to load subproject config: %w", err)
+	}
 	historyDir := history.GetHistoryDir(subprojectDir)
 
 	// Load generate entry
@@ -111,10 +118,10 @@ func runEdit(cmd *cobra.Command, _ []string) error {
 	var sourceType string
 	var sourceEditID string
 	var sourceOutput string
+	var editEntry *history.EditEntry
 
 	if editOpts.editLatest || editOpts.editID != "" {
 		// Edit from an existing edit
-		var editEntry *history.EditEntry
 		if editOpts.editLatest {
 			editEntry, err = history.GetLatestEditEntry(entryDir)
 			if err != nil {
@@ -155,10 +162,21 @@ func runEdit(cmd *cobra.Command, _ []string) error {
 	_, _ = fmt.Fprintf(w, "Editing from %s: %s\n", sourceType, sourceOutput)
 	_, _ = fmt.Fprintln(w, "")
 
+	// Resolve aspect ratio and image size: flag > source edit history > generate history > config
+	var editAspect, editSize string
+	if editEntry != nil {
+		editAspect = editEntry.Generation.AspectRatio
+		editSize = editEntry.Generation.ImageSize
+	}
+	aspect := cmp.Or(editOpts.aspect, editAspect, genEntry.Generation.AspectRatio, subprojectCfg.AspectRatio)
+	size := cmp.Or(editOpts.size, editSize, genEntry.Generation.ImageSize, subprojectCfg.ImageSize)
+
 	// Build edit spec
 	spec := generation.EditSpec{
 		Model:           model,
 		Prompt:          promptText,
+		AspectRatio:     aspect,
+		ImageSize:       size,
 		SourceImagePath: sourceImagePath,
 		EntryID:         genEntry.ID,
 		SourceType:      sourceType,
@@ -204,6 +222,8 @@ func init() {
 	editCmd.Flags().BoolVar(&editOpts.editLatest, "edit-latest", false, "Use the latest edit entry")
 	editCmd.Flags().StringVarP(&editOpts.prompt, "prompt", "p", "", "Edit prompt")
 	editCmd.Flags().StringVarP(&editOpts.promptFile, "prompt-file", "F", "", "Path to edit prompt file")
+	editCmd.Flags().StringVar(&editOpts.aspect, "aspect", "", "Output image aspect ratio (overrides history/config)")
+	editCmd.Flags().StringVar(&editOpts.size, "size", "", "Output image size (overrides history/config)")
 
 	editCmd.MarkFlagsMutuallyExclusive("id", "latest")
 	editCmd.MarkFlagsMutuallyExclusive("edit-id", "edit-latest")
