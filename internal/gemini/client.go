@@ -31,12 +31,7 @@ type Result struct {
 	TokenUsage TokenUsage
 }
 
-// Generator defines the interface for image generation
-type Generator interface {
-	Generate(ctx context.Context, params Params) *Result
-}
-
-// Client implements Generator and calls the real Gemini API
+// Client calls the real Gemini API for image generation
 type Client struct {
 	apiKey string
 }

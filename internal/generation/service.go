@@ -11,6 +11,12 @@ import (
 	"github.com/blck-snwmn/banago/internal/history"
 )
 
+// Generator defines the interface for image generation.
+// This allows for dependency injection and testing with mocks.
+type Generator interface {
+	Generate(ctx context.Context, params gemini.Params) *gemini.Result
+}
+
 // Result contains the output of a generation run.
 type Result struct {
 	EntryID      string
@@ -25,11 +31,11 @@ type EditResult struct {
 
 // Service handles image generation with dependency injection support.
 type Service struct {
-	generator gemini.Generator
+	generator Generator
 }
 
 // NewService creates a new Service with the given generator.
-func NewService(generator gemini.Generator) *Service {
+func NewService(generator Generator) *Service {
 	return &Service{generator: generator}
 }
 

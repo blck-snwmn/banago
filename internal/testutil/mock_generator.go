@@ -8,7 +8,7 @@ import (
 	"google.golang.org/genai"
 )
 
-// MockGenerator is a mock implementation of gemini.Generator for testing.
+// MockGenerator is a mock implementation of generation.Generator for testing.
 type MockGenerator struct {
 	mu sync.Mutex
 
@@ -22,7 +22,7 @@ type MockGenerator struct {
 	Calls []gemini.Params // Records all Generate calls
 }
 
-// Generate implements gemini.Generator.
+// Generate implements generation.Generator.
 func (m *MockGenerator) Generate(_ context.Context, params gemini.Params) *gemini.Result {
 	m.mu.Lock()
 	defer m.mu.Unlock()
