@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"cmp"
-	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -185,7 +184,7 @@ func runEdit(cmd *cobra.Command, _ []string) error {
 	}
 
 	// Run edit
-	_, err = generation.Edit(context.Background(), cfg.apiKey, spec, historyDir, w)
+	_, err = generation.Edit(cmd.Context(), cfg.apiKey, spec, historyDir, w)
 	return err
 }
 

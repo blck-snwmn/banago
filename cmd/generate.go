@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"cmp"
-	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -142,7 +141,7 @@ Must be run inside a subproject directory:
 
 		// Run generation
 		historyDir := history.GetHistoryDir(subprojectDir)
-		_, err = generation.Run(context.Background(), cfg.apiKey, spec, historyDir, cmd.OutOrStdout())
+		_, err = generation.Run(cmd.Context(), cfg.apiKey, spec, historyDir, cmd.OutOrStdout())
 		return err
 	},
 }

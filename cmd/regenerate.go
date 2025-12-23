@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"cmp"
-	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -130,7 +129,7 @@ Examples:
 		}
 
 		// Run generation
-		_, err = generation.Run(context.Background(), cfg.apiKey, spec, historyDir, w)
+		_, err = generation.Run(cmd.Context(), cfg.apiKey, spec, historyDir, w)
 		return err
 	},
 }
