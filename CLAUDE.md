@@ -152,7 +152,8 @@ Cobra-based CLI. See "banago CLI Commands" section for command details.
 - `internal/config/` - YAML config handling for project (`banago.yaml`) and subproject (`config.yaml`)
 - `internal/project/` - Project/subproject operations (finding root, initialization, listing)
 - `internal/history/` - Generation history management with UUID v7 IDs
-- `internal/generator/` - Gemini API client wrapper
+- `internal/gemini/` - Gemini API client wrapper for image generation
+- `internal/generation/` - Generation workflow orchestration and history management
 - `internal/templates/` - AI guide templates (CLAUDE.md, GEMINI.md, AGENTS.md)
 
 ### Key Data Flow
