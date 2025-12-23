@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"cmp"
 	"errors"
 	"os"
 	"strings"
@@ -35,9 +36,7 @@ func init() {
 // requireAPIKey checks if the API key is set and returns an error if not.
 // Should be called by commands that require the API key (generate, regenerate).
 func requireAPIKey() error {
-	if strings.TrimSpace(cfg.apiKey) == "" {
-		cfg.apiKey = strings.TrimSpace(os.Getenv("GEMINI_API_KEY"))
-	}
+	cfg.apiKey = cmp.Or(strings.TrimSpace(cfg.apiKey), strings.TrimSpace(os.Getenv("GEMINI_API_KEY")))
 	if cfg.apiKey == "" {
 		return errors.New("API key is required. Set --api-key or GEMINI_API_KEY environment variable")
 	}

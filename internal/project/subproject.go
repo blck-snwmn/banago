@@ -33,9 +33,7 @@ func CreateSubproject(projectRoot, name, description string) error {
 
 	// Create subproject configuration
 	cfg := config.NewSubprojectConfig(name)
-	if description != "" {
-		cfg.Description = description
-	}
+	cfg.Description = description
 	if err := cfg.Save(subprojectDir); err != nil {
 		return fmt.Errorf("failed to save subproject config: %w", err)
 	}

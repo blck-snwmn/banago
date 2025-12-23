@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -59,15 +60,7 @@ func collectImagePaths(subprojectDir string, subprojectCfg *config.SubprojectCon
 
 // resolveGenerationParams determines aspect ratio and size from flags and config.
 func resolveGenerationParams(flagAspect, flagSize string, subprojectCfg *config.SubprojectConfig) (aspect, size string) {
-	aspect = flagAspect
-	size = flagSize
-	if aspect == "" && subprojectCfg.AspectRatio != "" {
-		aspect = subprojectCfg.AspectRatio
-	}
-	if size == "" && subprojectCfg.ImageSize != "" {
-		size = subprojectCfg.ImageSize
-	}
-	return aspect, size
+	return cmp.Or(flagAspect, subprojectCfg.AspectRatio), cmp.Or(flagSize, subprojectCfg.ImageSize)
 }
 
 var genOpts generateOptions

@@ -62,12 +62,9 @@ func (c *Client) Generate(ctx context.Context, params Params) *Result {
 
 	gcfg := &genai.GenerateContentConfig{ResponseModalities: []string{"IMAGE"}}
 	if params.AspectRatio != "" || params.ImageSize != "" {
-		gcfg.ImageConfig = &genai.ImageConfig{}
-		if params.AspectRatio != "" {
-			gcfg.ImageConfig.AspectRatio = params.AspectRatio
-		}
-		if params.ImageSize != "" {
-			gcfg.ImageConfig.ImageSize = strings.ToUpper(params.ImageSize)
+		gcfg.ImageConfig = &genai.ImageConfig{
+			AspectRatio: params.AspectRatio,
+			ImageSize:   strings.ToUpper(params.ImageSize),
 		}
 	}
 
