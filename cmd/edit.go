@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/blck-snwmn/banago/internal/config"
+	"github.com/blck-snwmn/banago/internal/gemini"
 	"github.com/blck-snwmn/banago/internal/generation"
 	"github.com/blck-snwmn/banago/internal/history"
 	"github.com/blck-snwmn/banago/internal/project"
@@ -183,8 +184,14 @@ func runEdit(cmd *cobra.Command, _ []string) error {
 		SourceOutput:    sourceOutput,
 	}
 
+	// Create Gemini client
+	client, err := gemini.NewClient(cmd.Context(), cfg.apiKey)
+	if err != nil {
+		return fmt.Errorf("failed to create Gemini client: %w", err)
+	}
+
 	// Run edit
-	_, err = generation.Edit(cmd.Context(), cfg.apiKey, spec, historyDir, w)
+	_, err = generation.NewService(client).Edit(cmd.Context(), spec, historyDir, w)
 	return err
 }
 

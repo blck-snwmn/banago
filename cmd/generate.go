@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/blck-snwmn/banago/internal/config"
+	"github.com/blck-snwmn/banago/internal/gemini"
 	"github.com/blck-snwmn/banago/internal/generation"
 	"github.com/blck-snwmn/banago/internal/history"
 	"github.com/blck-snwmn/banago/internal/project"
@@ -139,9 +140,15 @@ Must be run inside a subproject directory:
 			InputImageNames: subprojectCfg.InputImages,
 		}
 
+		// Create Gemini client
+		client, err := gemini.NewClient(cmd.Context(), cfg.apiKey)
+		if err != nil {
+			return fmt.Errorf("failed to create Gemini client: %w", err)
+		}
+
 		// Run generation
 		historyDir := history.GetHistoryDir(subprojectDir)
-		_, err = generation.Run(cmd.Context(), cfg.apiKey, spec, historyDir, cmd.OutOrStdout())
+		_, err = generation.NewService(client).Run(cmd.Context(), spec, historyDir, cmd.OutOrStdout())
 		return err
 	},
 }

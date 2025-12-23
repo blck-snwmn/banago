@@ -33,24 +33,24 @@ type Result struct {
 
 // Client calls the real Gemini API for image generation
 type Client struct {
-	apiKey string
+	client *genai.Client
 }
 
-// NewClient creates a new Client with the given API key
-func NewClient(apiKey string) *Client {
-	return &Client{apiKey: apiKey}
+// NewClient creates a new Client with the given API key.
+// The SDK client is initialized immediately and reused for all API calls.
+func NewClient(ctx context.Context, apiKey string) (*Client, error) {
+	client, err := genai.NewClient(ctx, &genai.ClientConfig{
+		APIKey:  apiKey,
+		Backend: genai.BackendGeminiAPI,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize client: %w", err)
+	}
+	return &Client{client: client}, nil
 }
 
 // Generate calls the Gemini API to generate images
 func (c *Client) Generate(ctx context.Context, params Params) *Result {
-	client, err := genai.NewClient(ctx, &genai.ClientConfig{
-		APIKey:  c.apiKey,
-		Backend: genai.BackendGeminiAPI,
-	})
-	if err != nil {
-		return &Result{Error: fmt.Errorf("failed to initialize client: %w", err)}
-	}
-
 	parts := []*genai.Part{genai.NewPartFromText(params.Prompt)}
 	for _, imgPath := range params.ImagePaths {
 		part, err := ImagePartFromFile(imgPath)
@@ -69,7 +69,7 @@ func (c *Client) Generate(ctx context.Context, params Params) *Result {
 	}
 
 	contents := []*genai.Content{{Parts: parts}}
-	resp, err := client.Models.GenerateContent(ctx, params.Model, contents, gcfg)
+	resp, err := c.client.Models.GenerateContent(ctx, params.Model, contents, gcfg)
 
 	result := &Result{
 		Response: resp,
@@ -87,11 +87,6 @@ func (c *Client) Generate(ctx context.Context, params Params) *Result {
 	}
 
 	return result
-}
-
-// Generate calls the Gemini API to generate images (backward compatible wrapper)
-func Generate(ctx context.Context, apiKey string, params Params) *Result {
-	return NewClient(apiKey).Generate(ctx, params)
 }
 
 // PrintOutput prints the generation result to the writer

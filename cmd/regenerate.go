@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 
 	"github.com/blck-snwmn/banago/internal/config"
+	"github.com/blck-snwmn/banago/internal/gemini"
 	"github.com/blck-snwmn/banago/internal/generation"
 	"github.com/blck-snwmn/banago/internal/history"
 	"github.com/blck-snwmn/banago/internal/project"
@@ -128,8 +129,14 @@ Examples:
 			SourceEntryID:   sourceEntry.ID,
 		}
 
+		// Create Gemini client
+		client, err := gemini.NewClient(cmd.Context(), cfg.apiKey)
+		if err != nil {
+			return fmt.Errorf("failed to create Gemini client: %w", err)
+		}
+
 		// Run generation
-		_, err = generation.Run(cmd.Context(), cfg.apiKey, spec, historyDir, w)
+		_, err = generation.NewService(client).Run(cmd.Context(), spec, historyDir, w)
 		return err
 	},
 }

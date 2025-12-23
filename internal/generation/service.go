@@ -130,11 +130,6 @@ func (s *Service) Run(ctx context.Context, spec Spec, historyDir string, w io.Wr
 	}, nil
 }
 
-// Run executes the generation workflow (backward compatible wrapper).
-func Run(ctx context.Context, apiKey string, spec Spec, historyDir string, w io.Writer) (*Result, error) {
-	return NewService(gemini.NewClient(apiKey)).Run(ctx, spec, historyDir, w)
-}
-
 // Edit executes an edit operation on an existing image.
 func (s *Service) Edit(ctx context.Context, spec EditSpec, historyDir string, w io.Writer) (*EditResult, error) {
 	// Create edit entry
@@ -209,9 +204,4 @@ func (s *Service) Edit(ctx context.Context, spec EditSpec, historyDir string, w 
 		EditID:       editEntry.ID,
 		OutputImages: editEntry.Result.OutputImages,
 	}, nil
-}
-
-// Edit executes an edit operation (backward compatible wrapper).
-func Edit(ctx context.Context, apiKey string, spec EditSpec, historyDir string, w io.Writer) (*EditResult, error) {
-	return NewService(gemini.NewClient(apiKey)).Edit(ctx, spec, historyDir, w)
 }
