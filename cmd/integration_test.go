@@ -7,9 +7,59 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/blck-snwmn/banago/internal/testutil"
+	"github.com/blck-snwmn/banago/internal/history"
+	"github.com/blck-snwmn/banago/internal/project"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
+
+// createHistoryEntryForCLI creates a history entry for testing CLI commands that read history.
+// This is intentionally a local helper because:
+// - CLI integration tests can't use DI (they run the compiled binary)
+// - This should ONLY be used for testing read-only commands like "history"
+// - For generate/regenerate/edit tests, use the handler pattern with mock generators instead.
+func createHistoryEntryForCLI(t *testing.T, historyDir, prompt string) *history.Entry {
+	t.Helper()
+
+	// Read sample PNG
+	pngData, err := os.ReadFile("testdata/sample.png")
+	require.NoError(t, err, "failed to read sample.png")
+
+	entry := history.NewEntry()
+	entry.Generation.PromptFile = history.PromptFile
+	entry.Generation.InputImages = []string{"test.png"}
+	entry.Result.Success = true
+	entry.Result.OutputImages = []string{"output-test-1.png"}
+
+	entryDir := entry.GetEntryDir(historyDir)
+	if err := os.MkdirAll(entryDir, 0o755); err != nil {
+		t.Fatalf("failed to create entry directory: %v", err)
+	}
+
+	// Save prompt
+	if err := entry.SavePrompt(historyDir, prompt); err != nil {
+		t.Fatalf("failed to save prompt: %v", err)
+	}
+
+	// Create input image in entry directory
+	inputPath := filepath.Join(entryDir, "test.png")
+	if err := os.WriteFile(inputPath, pngData, 0o644); err != nil {
+		t.Fatalf("failed to create input image: %v", err)
+	}
+
+	// Create output image
+	outputPath := filepath.Join(entryDir, "output-test-1.png")
+	if err := os.WriteFile(outputPath, pngData, 0o644); err != nil {
+		t.Fatalf("failed to create output image: %v", err)
+	}
+
+	// Save entry metadata
+	if err := entry.Save(historyDir); err != nil {
+		t.Fatalf("failed to save entry: %v", err)
+	}
+
+	return entry
+}
 
 func TestIntegration_Init(t *testing.T) {
 	t.Parallel()
@@ -31,15 +81,18 @@ func TestIntegration_Init(t *testing.T) {
 		// Verify output
 		assert.Contains(t, string(output), "Initialized banago project")
 
-		// Verify project structure
-		testutil.VerifyProjectStructure(t, tmpDir)
+		// Verify project structure inline
+		assert.FileExists(t, filepath.Join(tmpDir, "banago.yaml"))
+		assert.DirExists(t, filepath.Join(tmpDir, "characters"))
+		assert.DirExists(t, filepath.Join(tmpDir, "subprojects"))
 	})
 
 	t.Run("fails if already initialized", func(t *testing.T) {
 		t.Parallel()
 
 		// Create a project first
-		projectRoot := testutil.CreateTestProject(t, "test-project")
+		projectRoot := t.TempDir()
+		require.NoError(t, project.InitProject(projectRoot, "test-project", false))
 
 		cmd := exec.Command(testBinPath, "init")
 		cmd.Dir = projectRoot
@@ -57,7 +110,8 @@ func TestIntegration_Init(t *testing.T) {
 		t.Parallel()
 
 		// Create a project first
-		projectRoot := testutil.CreateTestProject(t, "test-project")
+		projectRoot := t.TempDir()
+		require.NoError(t, project.InitProject(projectRoot, "test-project", false))
 
 		cmd := exec.Command(testBinPath, "init", "--force")
 		cmd.Dir = projectRoot
@@ -95,7 +149,8 @@ func TestIntegration_SubprojectCreate(t *testing.T) {
 	t.Run("creates subproject", func(t *testing.T) {
 		t.Parallel()
 
-		projectRoot := testutil.CreateTestProject(t, "test-project")
+		projectRoot := t.TempDir()
+		require.NoError(t, project.InitProject(projectRoot, "test-project", false))
 
 		cmd := exec.Command(testBinPath, "subproject", "create", "my-subproject")
 		cmd.Dir = projectRoot
@@ -108,16 +163,19 @@ func TestIntegration_SubprojectCreate(t *testing.T) {
 
 		assert.Contains(t, string(output), "my-subproject")
 
-		// Verify subproject structure
+		// Verify subproject structure inline
 		subprojectDir := filepath.Join(projectRoot, "subprojects", "my-subproject")
-		testutil.VerifySubprojectStructure(t, subprojectDir)
+		assert.FileExists(t, filepath.Join(subprojectDir, "config.yaml"))
+		assert.DirExists(t, filepath.Join(subprojectDir, "inputs"))
+		assert.DirExists(t, filepath.Join(subprojectDir, "history"))
 	})
 
 	t.Run("fails for duplicate name", func(t *testing.T) {
 		t.Parallel()
 
-		projectRoot := testutil.CreateTestProject(t, "test-project")
-		testutil.CreateTestSubproject(t, projectRoot, "existing-sub")
+		projectRoot := t.TempDir()
+		require.NoError(t, project.InitProject(projectRoot, "test-project", false))
+		require.NoError(t, project.CreateSubproject(projectRoot, "existing-sub", ""))
 
 		cmd := exec.Command(testBinPath, "subproject", "create", "existing-sub")
 		cmd.Dir = projectRoot
@@ -155,9 +213,10 @@ func TestIntegration_SubprojectList(t *testing.T) {
 	t.Run("lists subprojects", func(t *testing.T) {
 		t.Parallel()
 
-		projectRoot := testutil.CreateTestProject(t, "test-project")
-		testutil.CreateTestSubproject(t, projectRoot, "sub-one")
-		testutil.CreateTestSubproject(t, projectRoot, "sub-two")
+		projectRoot := t.TempDir()
+		require.NoError(t, project.InitProject(projectRoot, "test-project", false))
+		require.NoError(t, project.CreateSubproject(projectRoot, "sub-one", ""))
+		require.NoError(t, project.CreateSubproject(projectRoot, "sub-two", ""))
 
 		cmd := exec.Command(testBinPath, "subproject", "list")
 		cmd.Dir = projectRoot
@@ -175,7 +234,8 @@ func TestIntegration_SubprojectList(t *testing.T) {
 	t.Run("empty list", func(t *testing.T) {
 		t.Parallel()
 
-		projectRoot := testutil.CreateTestProject(t, "test-project")
+		projectRoot := t.TempDir()
+		require.NoError(t, project.InitProject(projectRoot, "test-project", false))
 
 		cmd := exec.Command(testBinPath, "subproject", "list")
 		cmd.Dir = projectRoot
@@ -196,13 +256,15 @@ func TestIntegration_History(t *testing.T) {
 	t.Run("shows history entries", func(t *testing.T) {
 		t.Parallel()
 
-		projectRoot := testutil.CreateTestProject(t, "test-project")
-		subprojectDir := testutil.CreateTestSubproject(t, projectRoot, "test-sub")
-		historyDir := testutil.GetHistoryDir(subprojectDir)
+		projectRoot := t.TempDir()
+		require.NoError(t, project.InitProject(projectRoot, "test-project", false))
+		require.NoError(t, project.CreateSubproject(projectRoot, "test-sub", ""))
+		subprojectDir := project.GetSubprojectDir(projectRoot, "test-sub")
+		historyDir := filepath.Join(subprojectDir, "history")
 
-		// Create some history entries
-		entry1, _ := testutil.CreateHistoryEntry(t, historyDir, "first prompt")
-		entry2, _ := testutil.CreateHistoryEntry(t, historyDir, "second prompt")
+		// Create some history entries (using local helper for read-only CLI tests)
+		entry1 := createHistoryEntryForCLI(t, historyDir, "first prompt")
+		entry2 := createHistoryEntryForCLI(t, historyDir, "second prompt")
 
 		cmd := exec.Command(testBinPath, "history")
 		cmd.Dir = subprojectDir
@@ -221,8 +283,10 @@ func TestIntegration_History(t *testing.T) {
 	t.Run("empty history", func(t *testing.T) {
 		t.Parallel()
 
-		projectRoot := testutil.CreateTestProject(t, "test-project")
-		subprojectDir := testutil.CreateTestSubproject(t, projectRoot, "test-sub")
+		projectRoot := t.TempDir()
+		require.NoError(t, project.InitProject(projectRoot, "test-project", false))
+		require.NoError(t, project.CreateSubproject(projectRoot, "test-sub", ""))
+		subprojectDir := project.GetSubprojectDir(projectRoot, "test-sub")
 
 		cmd := exec.Command(testBinPath, "history")
 		cmd.Dir = subprojectDir
@@ -239,7 +303,8 @@ func TestIntegration_History(t *testing.T) {
 	t.Run("fails outside subproject", func(t *testing.T) {
 		t.Parallel()
 
-		projectRoot := testutil.CreateTestProject(t, "test-project")
+		projectRoot := t.TempDir()
+		require.NoError(t, project.InitProject(projectRoot, "test-project", false))
 
 		cmd := exec.Command(testBinPath, "history")
 		cmd.Dir = projectRoot
@@ -260,8 +325,10 @@ func TestIntegration_Status(t *testing.T) {
 	t.Run("shows subproject status", func(t *testing.T) {
 		t.Parallel()
 
-		projectRoot := testutil.CreateTestProject(t, "test-project")
-		subprojectDir := testutil.CreateTestSubproject(t, projectRoot, "test-sub")
+		projectRoot := t.TempDir()
+		require.NoError(t, project.InitProject(projectRoot, "test-project", false))
+		require.NoError(t, project.CreateSubproject(projectRoot, "test-sub", ""))
+		subprojectDir := project.GetSubprojectDir(projectRoot, "test-sub")
 
 		cmd := exec.Command(testBinPath, "status")
 		cmd.Dir = subprojectDir
@@ -279,8 +346,9 @@ func TestIntegration_Status(t *testing.T) {
 	t.Run("shows project status from root", func(t *testing.T) {
 		t.Parallel()
 
-		projectRoot := testutil.CreateTestProject(t, "test-project")
-		testutil.CreateTestSubproject(t, projectRoot, "sub-one")
+		projectRoot := t.TempDir()
+		require.NoError(t, project.InitProject(projectRoot, "test-project", false))
+		require.NoError(t, project.CreateSubproject(projectRoot, "sub-one", ""))
 
 		cmd := exec.Command(testBinPath, "status")
 		cmd.Dir = projectRoot

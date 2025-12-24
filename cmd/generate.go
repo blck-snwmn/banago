@@ -2,8 +2,10 @@ package cmd
 
 import (
 	"cmp"
+	"context"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -21,6 +23,11 @@ type generateOptions struct {
 	promptFile string
 	aspect     string
 	size       string
+}
+
+// generateHandler handles the generate command with dependency injection support.
+type generateHandler struct {
+	generator generation.Generator
 }
 
 // resolvePrompt returns the prompt text from either inline prompt or file.
@@ -78,79 +85,84 @@ Must be run inside a subproject directory:
 		if err := requireAPIKey(); err != nil {
 			return err
 		}
-
-		// Get prompt
-		promptText, err := resolvePrompt(genOpts.prompt, genOpts.promptFile)
-		if err != nil {
-			return err
-		}
-
-		// Must be in a project
 		cwd, err := os.Getwd()
 		if err != nil {
 			return fmt.Errorf("failed to get current directory: %w", err)
 		}
 
-		projectRoot, err := project.FindProjectRoot(cwd)
-		if err != nil {
-			if errors.Is(err, project.ErrProjectNotFound) {
-				return errors.New("banago project not found. Run 'banago init' first")
-			}
-			return err
-		}
-
-		// Load project config
-		projectCfg, err := config.LoadProjectConfig(projectRoot)
-		if err != nil {
-			return fmt.Errorf("failed to load project config: %w", err)
-		}
-		model := projectCfg.Model
-
-		// Must be in a subproject
-		subprojectName, err := project.FindCurrentSubproject(projectRoot, cwd)
-		if err != nil {
-			if errors.Is(err, project.ErrNotInSubproject) {
-				return errors.New("not in a subproject. Navigate to a subproject directory")
-			}
-			return err
-		}
-
-		subprojectDir := project.GetSubprojectDir(projectRoot, subprojectName)
-		subprojectCfg, err := config.LoadSubprojectConfig(subprojectDir)
-		if err != nil {
-			return fmt.Errorf("failed to load subproject config: %w", err)
-		}
-
-		// Collect image paths
-		imagePaths := collectImagePaths(subprojectDir, subprojectCfg)
-		if len(imagePaths) == 0 {
-			return errors.New("no images specified. Set input_images in subproject config.yaml")
-		}
-
-		// Determine aspect ratio and size
-		aspect, size := resolveGenerationParams(genOpts.aspect, genOpts.size, subprojectCfg)
-
-		// Build generation spec
-		spec := generation.Spec{
-			Model:           model,
-			Prompt:          promptText,
-			ImagePaths:      imagePaths,
-			AspectRatio:     aspect,
-			ImageSize:       size,
-			InputImageNames: subprojectCfg.InputImages,
-		}
-
-		// Create Gemini client
+		// Create Gemini client and inject into handler
 		client, err := gemini.NewClient(cmd.Context(), cfg.apiKey)
 		if err != nil {
 			return fmt.Errorf("failed to create Gemini client: %w", err)
 		}
 
-		// Run generation
-		historyDir := history.GetHistoryDir(subprojectDir)
-		_, err = generation.NewService(client).Run(cmd.Context(), spec, historyDir, cmd.OutOrStdout())
-		return err
+		handler := &generateHandler{generator: client}
+		return handler.run(cmd.Context(), genOpts, cwd, cmd.OutOrStdout())
 	},
+}
+
+// run executes the generate command logic.
+// This method is independent of cobra.Command for testability.
+func (h *generateHandler) run(ctx context.Context, opts generateOptions, cwd string, w io.Writer) error {
+	// Get prompt
+	promptText, err := resolvePrompt(opts.prompt, opts.promptFile)
+	if err != nil {
+		return err
+	}
+
+	projectRoot, err := project.FindProjectRoot(cwd)
+	if err != nil {
+		if errors.Is(err, project.ErrProjectNotFound) {
+			return errors.New("banago project not found. Run 'banago init' first")
+		}
+		return err
+	}
+
+	// Load project config
+	projectCfg, err := config.LoadProjectConfig(projectRoot)
+	if err != nil {
+		return fmt.Errorf("failed to load project config: %w", err)
+	}
+	model := projectCfg.Model
+
+	// Must be in a subproject
+	subprojectName, err := project.FindCurrentSubproject(projectRoot, cwd)
+	if err != nil {
+		if errors.Is(err, project.ErrNotInSubproject) {
+			return errors.New("not in a subproject. Navigate to a subproject directory")
+		}
+		return err
+	}
+
+	subprojectDir := project.GetSubprojectDir(projectRoot, subprojectName)
+	subprojectCfg, err := config.LoadSubprojectConfig(subprojectDir)
+	if err != nil {
+		return fmt.Errorf("failed to load subproject config: %w", err)
+	}
+
+	// Collect image paths
+	imagePaths := collectImagePaths(subprojectDir, subprojectCfg)
+	if len(imagePaths) == 0 {
+		return errors.New("no images specified. Set input_images in subproject config.yaml")
+	}
+
+	// Determine aspect ratio and size
+	aspect, size := resolveGenerationParams(opts.aspect, opts.size, subprojectCfg)
+
+	// Build generation spec
+	spec := generation.Spec{
+		Model:           model,
+		Prompt:          promptText,
+		ImagePaths:      imagePaths,
+		AspectRatio:     aspect,
+		ImageSize:       size,
+		InputImageNames: subprojectCfg.InputImages,
+	}
+
+	// Run generation with injected generator
+	historyDir := history.GetHistoryDir(subprojectDir)
+	_, err = generation.NewService(h.generator).Run(ctx, spec, historyDir, w)
+	return err
 }
 
 func init() {

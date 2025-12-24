@@ -156,6 +156,38 @@ Cobra-based CLI. See "banago CLI Commands" section for command details.
 - `internal/generation/` - Generation workflow orchestration and history management
 - `internal/templates/` - AI guide templates (CLAUDE.md, GEMINI.md, AGENTS.md)
 
+## Testing Guidelines
+
+### Test File Organization
+- `testdata/` - Test data placed per-package (e.g., `cmd/testdata/`, `internal/generation/testdata/`)
+- `*_test.go` - Test helpers and mocks live in `_test.go` files within each package
+- Avoid centralized `testutil` packages - they tend to hide test setup logic
+
+### Mock Patterns
+- Interface Guard for compile-time verification: `var _ Interface = (*MockStruct)(nil)`
+- Mocks in `_test.go` files are excluded from production binary
+- Hand-write simple mocks; use gomock for complex interfaces
+
+### Test Setup
+- Call `project.InitProject` / `project.CreateSubproject` directly
+- Don't duplicate logic in fixtures - use the real functions
+- Inline verification logic instead of hiding in helper functions
+
+```go
+// Good: Explicit setup
+projectRoot := t.TempDir()
+require.NoError(t, project.InitProject(projectRoot, "test", false))
+require.NoError(t, project.CreateSubproject(projectRoot, "sub", ""))
+
+// Good: Inline verification
+assert.DirExists(t, entryDir)
+assert.FileExists(t, filepath.Join(entryDir, "meta.yaml"))
+
+// Bad: Hidden in fixture functions
+projectRoot := testutil.CreateTestProject(t, "test")
+testutil.VerifyHistoryEntry(t, historyDir, entryID)
+```
+
 ### Key Data Flow
 
 1. Commands search upward for `banago.yaml` to find project root

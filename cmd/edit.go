@@ -2,8 +2,10 @@ package cmd
 
 import (
 	"cmp"
+	"context"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -27,6 +29,11 @@ type editOptions struct {
 	size       string
 }
 
+// editHandler handles the edit command with dependency injection support.
+type editHandler struct {
+	generator generation.Generator
+}
+
 var editOpts editOptions
 
 var editCmd = &cobra.Command{
@@ -43,28 +50,38 @@ Examples:
   banago edit --id <uuid> -p "Fix the background"
   banago edit --id <uuid> --edit-id <edit-uuid> -p "Additional adjustments"`,
 	Args: cobra.NoArgs,
-	RunE: runEdit,
+	RunE: func(cmd *cobra.Command, _ []string) error {
+		if err := requireAPIKey(); err != nil {
+			return err
+		}
+
+		// Validate flags
+		if !editOpts.latest && editOpts.id == "" {
+			return errors.New("specify --latest or --id <uuid>")
+		}
+
+		cwd, err := os.Getwd()
+		if err != nil {
+			return fmt.Errorf("failed to get current directory: %w", err)
+		}
+
+		// Create Gemini client and inject into handler
+		client, err := gemini.NewClient(cmd.Context(), cfg.apiKey)
+		if err != nil {
+			return fmt.Errorf("failed to create Gemini client: %w", err)
+		}
+
+		handler := &editHandler{generator: client}
+		return handler.run(cmd.Context(), editOpts, cwd, cmd.OutOrStdout())
+	},
 }
 
-func runEdit(cmd *cobra.Command, _ []string) error {
-	if err := requireAPIKey(); err != nil {
-		return err
-	}
-
-	// Validate flags
-	if !editOpts.latest && editOpts.id == "" {
-		return errors.New("specify --latest or --id <uuid>")
-	}
-
-	promptText, err := resolveEditPrompt(editOpts.prompt, editOpts.promptFile)
+// run executes the edit command logic.
+// This method is independent of cobra.Command for testability.
+func (h *editHandler) run(ctx context.Context, opts editOptions, cwd string, w io.Writer) error {
+	promptText, err := resolveEditPrompt(opts.prompt, opts.promptFile)
 	if err != nil {
 		return err
-	}
-
-	// Must be in a subproject
-	cwd, err := os.Getwd()
-	if err != nil {
-		return fmt.Errorf("failed to get current directory: %w", err)
 	}
 
 	projectRoot, err := project.FindProjectRoot(cwd)
@@ -99,13 +116,13 @@ func runEdit(cmd *cobra.Command, _ []string) error {
 
 	// Load generate entry
 	var genEntry *history.Entry
-	if editOpts.latest {
+	if opts.latest {
 		genEntry, err = history.GetLatestEntry(historyDir)
 		if err != nil {
 			return fmt.Errorf("failed to get latest history: %w", err)
 		}
 	} else {
-		genEntry, err = history.GetEntryByID(historyDir, editOpts.id)
+		genEntry, err = history.GetEntryByID(historyDir, opts.id)
 		if err != nil {
 			return fmt.Errorf("failed to get history entry: %w", err)
 		}
@@ -120,15 +137,15 @@ func runEdit(cmd *cobra.Command, _ []string) error {
 	var sourceOutput string
 	var editEntry *history.EditEntry
 
-	if editOpts.editLatest || editOpts.editID != "" {
+	if opts.editLatest || opts.editID != "" {
 		// Edit from an existing edit
-		if editOpts.editLatest {
+		if opts.editLatest {
 			editEntry, err = history.GetLatestEditEntry(entryDir)
 			if err != nil {
 				return fmt.Errorf("failed to get latest edit: %w", err)
 			}
 		} else {
-			editEntry, err = history.GetEditEntryByID(entryDir, editOpts.editID)
+			editEntry, err = history.GetEditEntryByID(entryDir, opts.editID)
 			if err != nil {
 				return fmt.Errorf("failed to get edit entry: %w", err)
 			}
@@ -158,7 +175,6 @@ func runEdit(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("source image not found: %s", sourceImagePath)
 	}
 
-	w := cmd.OutOrStdout()
 	_, _ = fmt.Fprintf(w, "Editing from %s: %s\n", sourceType, sourceOutput)
 	_, _ = fmt.Fprintln(w, "")
 
@@ -168,8 +184,8 @@ func runEdit(cmd *cobra.Command, _ []string) error {
 		editAspect = editEntry.Generation.AspectRatio
 		editSize = editEntry.Generation.ImageSize
 	}
-	aspect := cmp.Or(editOpts.aspect, editAspect, genEntry.Generation.AspectRatio, subprojectCfg.AspectRatio)
-	size := cmp.Or(editOpts.size, editSize, genEntry.Generation.ImageSize, subprojectCfg.ImageSize)
+	aspect := cmp.Or(opts.aspect, editAspect, genEntry.Generation.AspectRatio, subprojectCfg.AspectRatio)
+	size := cmp.Or(opts.size, editSize, genEntry.Generation.ImageSize, subprojectCfg.ImageSize)
 
 	// Build edit spec
 	spec := generation.EditSpec{
@@ -184,14 +200,8 @@ func runEdit(cmd *cobra.Command, _ []string) error {
 		SourceOutput:    sourceOutput,
 	}
 
-	// Create Gemini client
-	client, err := gemini.NewClient(cmd.Context(), cfg.apiKey)
-	if err != nil {
-		return fmt.Errorf("failed to create Gemini client: %w", err)
-	}
-
-	// Run edit
-	_, err = generation.NewService(client).Edit(cmd.Context(), spec, historyDir, w)
+	// Run edit with injected generator
+	_, err = generation.NewService(h.generator).Edit(ctx, spec, historyDir, w)
 	return err
 }
 
