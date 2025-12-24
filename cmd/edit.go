@@ -55,11 +55,6 @@ Examples:
 			return err
 		}
 
-		// Validate flags
-		if !editOpts.latest && editOpts.id == "" {
-			return errors.New("specify --latest or --id <uuid>")
-		}
-
 		cwd, err := os.Getwd()
 		if err != nil {
 			return fmt.Errorf("failed to get current directory: %w", err)
@@ -241,7 +236,9 @@ func init() {
 	editCmd.Flags().StringVar(&editOpts.aspect, "aspect", "", "Output image aspect ratio (overrides history/config)")
 	editCmd.Flags().StringVar(&editOpts.size, "size", "", "Output image size (overrides history/config)")
 
+	editCmd.MarkFlagsOneRequired("id", "latest")
 	editCmd.MarkFlagsMutuallyExclusive("id", "latest")
 	editCmd.MarkFlagsMutuallyExclusive("edit-id", "edit-latest")
+	editCmd.MarkFlagsOneRequired("prompt", "prompt-file")
 	editCmd.MarkFlagsMutuallyExclusive("prompt", "prompt-file")
 }

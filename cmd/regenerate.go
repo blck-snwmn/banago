@@ -48,10 +48,6 @@ Examples:
 			return err
 		}
 
-		if !regenOpts.latest && regenOpts.id == "" {
-			return errors.New("specify --latest or --id <uuid>")
-		}
-
 		cwd, err := os.Getwd()
 		if err != nil {
 			return fmt.Errorf("failed to get current directory: %w", err)
@@ -161,5 +157,6 @@ func init() {
 	regenerateCmd.Flags().StringVar(&regenOpts.aspect, "aspect", "", "Output image aspect ratio (overrides history/config)")
 	regenerateCmd.Flags().StringVar(&regenOpts.size, "size", "", "Output image size (overrides history/config)")
 
+	regenerateCmd.MarkFlagsOneRequired("id", "latest")
 	regenerateCmd.MarkFlagsMutuallyExclusive("id", "latest")
 }
