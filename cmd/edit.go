@@ -78,13 +78,13 @@ Examples:
 
 // run executes the edit command logic.
 // This method is independent of cobra.Command for testability.
-func (h *editHandler) run(ctx context.Context, opts editOptions, cwd string, w io.Writer) error {
+func (h *editHandler) run(ctx context.Context, opts editOptions, workDir string, w io.Writer) error {
 	promptText, err := resolveEditPrompt(opts.prompt, opts.promptFile)
 	if err != nil {
 		return err
 	}
 
-	projectRoot, err := project.FindProjectRoot(cwd)
+	projectRoot, err := project.FindProjectRoot(workDir)
 	if err != nil {
 		if errors.Is(err, project.ErrProjectNotFound) {
 			return errors.New("banago project not found. Run 'banago init' first")
@@ -99,7 +99,7 @@ func (h *editHandler) run(ctx context.Context, opts editOptions, cwd string, w i
 	}
 	model := projectCfg.Model
 
-	subprojectName, err := project.FindCurrentSubproject(projectRoot, cwd)
+	subprojectName, err := project.FindCurrentSubproject(projectRoot, workDir)
 	if err != nil {
 		if errors.Is(err, project.ErrNotInSubproject) {
 			return errors.New("not in a subproject. Navigate to a subproject directory")

@@ -103,14 +103,14 @@ Must be run inside a subproject directory:
 
 // run executes the generate command logic.
 // This method is independent of cobra.Command for testability.
-func (h *generateHandler) run(ctx context.Context, opts generateOptions, cwd string, w io.Writer) error {
+func (h *generateHandler) run(ctx context.Context, opts generateOptions, workDir string, w io.Writer) error {
 	// Get prompt
 	promptText, err := resolvePrompt(opts.prompt, opts.promptFile)
 	if err != nil {
 		return err
 	}
 
-	projectRoot, err := project.FindProjectRoot(cwd)
+	projectRoot, err := project.FindProjectRoot(workDir)
 	if err != nil {
 		if errors.Is(err, project.ErrProjectNotFound) {
 			return errors.New("banago project not found. Run 'banago init' first")
@@ -126,7 +126,7 @@ func (h *generateHandler) run(ctx context.Context, opts generateOptions, cwd str
 	model := projectCfg.Model
 
 	// Must be in a subproject
-	subprojectName, err := project.FindCurrentSubproject(projectRoot, cwd)
+	subprojectName, err := project.FindCurrentSubproject(projectRoot, workDir)
 	if err != nil {
 		if errors.Is(err, project.ErrNotInSubproject) {
 			return errors.New("not in a subproject. Navigate to a subproject directory")

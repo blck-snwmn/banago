@@ -35,8 +35,8 @@ func FindProjectRoot(startDir string) (string, error) {
 
 // FindCurrentSubproject determines if the current directory is inside a subproject
 // Returns the subproject name if found
-func FindCurrentSubproject(projectRoot, cwd string) (string, error) {
-	rel, err := filepath.Rel(projectRoot, cwd)
+func FindCurrentSubproject(projectRoot, workDir string) (string, error) {
+	rel, err := filepath.Rel(projectRoot, workDir)
 	if err != nil {
 		return "", err
 	}

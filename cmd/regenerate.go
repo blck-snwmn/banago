@@ -70,8 +70,8 @@ Examples:
 
 // run executes the regenerate command logic.
 // This method is independent of cobra.Command for testability.
-func (h *regenerateHandler) run(ctx context.Context, opts regenerateOptions, cwd string, w io.Writer) error {
-	projectRoot, err := project.FindProjectRoot(cwd)
+func (h *regenerateHandler) run(ctx context.Context, opts regenerateOptions, workDir string, w io.Writer) error {
+	projectRoot, err := project.FindProjectRoot(workDir)
 	if err != nil {
 		if errors.Is(err, project.ErrProjectNotFound) {
 			return errors.New("banago project not found. Run 'banago init' first")
@@ -86,7 +86,7 @@ func (h *regenerateHandler) run(ctx context.Context, opts regenerateOptions, cwd
 	}
 	model := projectCfg.Model
 
-	subprojectName, err := project.FindCurrentSubproject(projectRoot, cwd)
+	subprojectName, err := project.FindCurrentSubproject(projectRoot, workDir)
 	if err != nil {
 		if errors.Is(err, project.ErrNotInSubproject) {
 			return errors.New("not in a subproject. Navigate to a subproject directory")
