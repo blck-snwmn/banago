@@ -1,7 +1,7 @@
 *.png
 *.jpg
 *.jpeg
-!testdata/*.png
+!**/testdata/*.png
 prompt
 input
 dist
