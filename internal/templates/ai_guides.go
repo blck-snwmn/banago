@@ -2,6 +2,21 @@ package templates
 
 const baseGuide = `**Model**: ` + "`gemini-3-pro-image-preview`" + ` - Prompts must be optimized for this model.
 
+## Important: Your Image Reading Capability
+
+**You CAN read and understand image files.** Do not hesitate to view images directly.
+
+- You are powered by a **multimodal model** that understands both text and images
+- Reading a file (whether text or image) is just file I/O - the CLI handles it the same way
+- You SHOULD proactively read image files to:
+  - Understand reference images in ` + "`inputs/`" + `
+  - Review generated images in ` + "`history/<uuid>/output_*.png`" + `
+  - Check edited images in ` + "`history/<uuid>/edits/<edit-uuid>/output_*.png`" + `
+  - Analyze character appearance from existing images
+- **Do NOT assume you cannot read images** - you absolutely can and should
+
+When reviewing generation results or preparing prompts, actively read the relevant image files to provide better feedback and create more accurate prompts.
+
 ## Quick Start: Image Generation Flow
 
 Follow these steps to generate images:
@@ -71,7 +86,10 @@ input_images:
 **Always save prompts to a file.** This prevents context loss during long conversations.
 
 1. Read ` + "`context.md`" + ` and ` + "`characters/<name>.md`" + `
-2. Review reference images in ` + "`inputs/`" + `
+2. **Read the reference images** in ` + "`inputs/`" + ` directly
+   - You CAN read image files - do not skip this step
+   - Understand the character's appearance, style, and details from the images
+   - This helps you create more accurate and consistent prompts
 3. Draft a prompt optimized for ` + "`gemini-3-pro-image-preview`" + `:
    - **Use natural language sentences, NOT tag-based format** (e.g., NOT "1girl, blue hair, standing")
    - **Longer, detailed prompts are better** - don't be brief
@@ -90,20 +108,57 @@ input_images:
 banago generate --prompt-file prompt.txt
 ` + "```" + `
 
-### Step 6: Iterate and Improve
+### Step 6: Review and Decide Next Action
+
+After generation, you MUST review the results and decide on the appropriate action.
+
+#### 6.1: Review Generated Images
 ` + "```bash" + `
 banago history
 ` + "```" + `
-1. Review past prompts in ` + "`history/<uuid>/prompt.txt`" + ` (read-only snapshots)
-2. **Read the current prompt file first** before making changes
-3. Edit the prompt file based on results
-4. **Show improved prompt to user and get confirmation**
-5. Generate again with ` + "`banago generate --prompt-file prompt.txt`" + `
+1. **Read the generated images** in ` + "`history/<uuid>/output_*.png`" + `
+   - You CAN and SHOULD view images directly - do not skip this step
+2. **Read the prompt** used for generation in ` + "`history/<uuid>/prompt.txt`" + `
+3. **Compare**: Does the generated image match the prompt's intent?
 
-### Step 7: Edit Generated Images (Optional)
+#### 6.2: Decide Action Based on Results
 
-Use ` + "`banago edit`" + ` for small fixes (e.g., wrong button color, minor adjustments):
+| Result | Action | Command |
+|--------|--------|---------|
+| ✅ Perfect | Done! Inform the user | - |
+| ❌ Completely different | Revise prompt → New generation | ` + "`banago generate`" + ` |
+| ⚠️ Partially wrong | Edit specific parts | ` + "`banago edit`" + ` |
 
+**Choose "New generation" (` + "`generate`" + `) when:**
+- Overall composition is wrong (e.g., wrong pose, wrong scene)
+- Character appearance is fundamentally incorrect
+- Style or atmosphere doesn't match at all
+- Multiple major issues exist
+
+**Choose "Edit" (` + "`edit`" + `) when:**
+- Small details are wrong (e.g., button color, accessory)
+- Minor adjustments needed (e.g., lighting, expression tweak)
+- Overall image is good but one specific element needs fixing
+
+Note: ` + "`regenerate`" + ` command reuses the same prompt. Use ` + "`generate`" + ` when you need to revise the prompt.
+
+#### 6.3a: If New Generation (Major Issues)
+
+1. Analyze what went wrong in the current image
+2. **Read the current prompt file** (` + "`prompt.txt`" + ` in subproject root)
+3. Revise the prompt to address the issues
+4. **Show the revised prompt to user and get confirmation**
+5. Generate again:
+` + "```bash" + `
+banago generate --prompt-file prompt.txt
+` + "```" + `
+6. Return to Step 6.1 to review the new result
+
+#### 6.3b: If Editing (Minor Issues)
+
+1. Identify the specific part that needs fixing
+2. Create a focused edit prompt describing the change
+3. Run the edit command:
 ` + "```bash" + `
 # Edit the latest generated image
 banago edit --latest -p "Change the button color to red"
@@ -111,11 +166,13 @@ banago edit --latest -p "Change the button color to red"
 # Edit a specific history entry
 banago edit --id <uuid> -p "Fix the background lighting"
 
-# Chain edits (edit an edited image)
+# Chain edits (edit a previously edited image)
 banago edit --latest --edit-latest -p "Further adjust the shadows"
 ` + "```" + `
-
-**Important**: Edit is for small fixes, not regeneration. For major changes, use ` + "`generate`" + ` with an improved prompt.
+4. **Read the edited images** in ` + "`history/<uuid>/edits/<edit-uuid>/output_*.png`" + `
+5. If still not right, either:
+   - Chain another edit (for minor adjustments)
+   - Go back to regeneration (if edits aren't working)
 
 ---
 
